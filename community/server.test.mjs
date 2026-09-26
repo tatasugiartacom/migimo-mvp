@@ -13,7 +13,8 @@ test('public pages load while member content stays server protected', async () =
       assert.equal(response.status, 200);
     }
     const home = await (await fetch(base + '/')).text();
-    assert.match(home, /Terhubung sebagai PMI/);
+    assert.match(home, /Connecting Dreams/);
+    assert.match(home, /86 negara/);
     assert.doesNotMatch(home, /Saat memilih cara kirim uang/);
     const login = await (await fetch(base + '/login')).text();
     assert.match(login, /Pendaftaran belum dibuka/);
@@ -27,6 +28,9 @@ test('public pages load while member content stays server protected', async () =
     const logo = await fetch(base + '/assets/migimo-logo.png');
     assert.equal(logo.status, 200);
     assert.equal(logo.headers.get('content-type'), 'image/png');
+    const airportPhoto = await fetch(base + '/assets/pmi-airport.webp');
+    assert.equal(airportPhoto.status, 200);
+    assert.equal(airportPhoto.headers.get('content-type'), 'image/webp');
     for (const path of ['/community', '/community/post/1', '/api/community', '/api/community/feed']) {
       const response = await fetch(base + path);
       assert.equal(response.status, 401);
