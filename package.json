@@ -1,0 +1,12 @@
+{
+  "name": "migimo-community-staging",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node community/server.mjs",
+    "test": "node --test community/server.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
