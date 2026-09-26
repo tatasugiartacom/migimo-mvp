@@ -16,6 +16,7 @@ test('public pages load while member content stays server protected', async () =
     assert.match(home, /Connecting Dreams/);
     assert.match(home, /86 negara/);
     assert.match(home, /href="\/login">Masuk/);
+    assert.match(home, /href="\/">Komunitas/);
     assert.match(home, /href="\/daftar">Daftar/);
     assert.doesNotMatch(home, /Kirim Uang di App/);
     assert.doesNotMatch(home, /CERITA YANG BERARTI|AMAN DAN JELAS|Mulai dari sebuah cerita/);
@@ -24,9 +25,14 @@ test('public pages load while member content stays server protected', async () =
     }
     assert.doesNotMatch(home, /Saat memilih cara kirim uang/);
     const login = await (await fetch(base + '/login')).text();
-    assert.match(login, /Pendaftaran belum dibuka/);
+    assert.match(login, /Selamat datang di Migimo/);
+    assert.match(login, /Lanjutkan dengan Google/);
+    assert.match(login, /Masuk dengan Google sedang disiapkan/);
     const signup = await (await fetch(base + '/daftar')).text();
-    assert.match(signup, /Pendaftaran sedang disiapkan/);
+    assert.match(signup, /Satu langkah lagi bergabung dengan Komunitas PMI/);
+    assert.match(signup, /Nama lengkap sesuai KTP/);
+    assert.match(signup, /Daftar dengan Google/);
+    assert.doesNotMatch(signup, /Login Google tidak memverifikasi status PMI/);
     const app = await (await fetch(base + '/app')).text();
     assert.match(app, /Tautan Migimo App sedang disiapkan/);
     const style = await fetch(base + '/style.css');
