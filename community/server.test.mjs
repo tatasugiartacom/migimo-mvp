@@ -11,6 +11,7 @@ test('public pages load while member content stays server protected', async () =
     for (const path of ['/', '/app', '/login', '/daftar']) {
       const response = await fetch(base + path);
       assert.equal(response.status, 200);
+      assert.doesNotMatch(await response.text(), /Community/);
     }
     const home = await (await fetch(base + '/')).text();
     assert.match(home, /Connecting Dreams/);
@@ -18,6 +19,7 @@ test('public pages load while member content stays server protected', async () =
     assert.match(home, /href="\/login">Masuk/);
     assert.match(home, /href="\/">Komunitas/);
     assert.match(home, /href="\/daftar">Daftar/);
+    assert.match(home, /Gabung Komunitas/);
     assert.doesNotMatch(home, /Kirim Uang di App/);
     assert.doesNotMatch(home, /CERITA YANG BERARTI|AMAN DAN JELAS|Mulai dari sebuah cerita/);
     for (const domain of ['facebook.com/migimoid', 'instagram.com/migimoid', 'threads.com/@migimoid', 'youtube.com/@MigimoID', 'x.com/migimoid']) {
