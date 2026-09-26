@@ -12,6 +12,9 @@ test('public pages load while member content stays server protected', async () =
       const response = await fetch(base + path);
       assert.equal(response.status, 200);
     }
+    const logo = await fetch(base + '/assets/migimo-logo.png');
+    assert.equal(logo.status, 200);
+    assert.equal(logo.headers.get('content-type'), 'image/png');
     for (const path of ['/community', '/community/post/1', '/api/community/feed']) {
       const response = await fetch(base + path);
       assert.equal(response.status, 401);
