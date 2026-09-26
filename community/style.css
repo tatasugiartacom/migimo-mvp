@@ -66,5 +66,6 @@ body{font-family:"DM Sans",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI"
 .nav-cta[aria-current="page"]{box-shadow:none}
 .nav-cta:hover,.nav-cta:active,.btn.primary:hover,.btn.primary:active,.auth-google:not(:disabled):hover,.auth-google:not(:disabled):active{background:var(--green);color:white;filter:none}
 .auth-google:disabled{cursor:not-allowed}
+.auth-google[href],button.auth-google:not(:disabled){text-decoration:none;cursor:pointer}
 .social-links a:active{background:var(--green);color:white}
 button:focus-visible{outline:3px solid var(--red);outline-offset:3px}

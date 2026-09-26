@@ -1,6 +1,9 @@
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { previewPage } from './preview.mjs';
+import { authReady, cookieValue, unsign, sign, setCookie, clearCookie, redirect, startGoogle, finishGoogle, validOrigin, readBody } from './auth.mjs';
+import { findMember, memberById, registerMember, updateCategory, listPosts, createPost, getPost, listComments, addComment, toggleReaction } from './data.mjs';
+import { memberHome, memberProfile, memberDiscussion } from './member-view.mjs';
 
 const logo = readFileSync(new URL('./assets/migimo-logo.png', import.meta.url));
 const favicon = readFileSync(new URL('./assets/favicon.png', import.meta.url));
@@ -26,9 +29,12 @@ function page(title, active, content) {
 const home = `<section class="hero"><div class="wrap hero-grid"><div class="hero-copy"><span class="eyebrow"><span class="dot"></span> MIGIMO KOMUNITAS</span><h1>Migimo<br><em>Connecting Dreams.</em></h1><p class="lead">Tempat berkumpulnya PMI, Purna PMI, dan Keluarga PMI. Terhubung dari 86 negara penempatan hingga kampung halaman di Indonesia.</p><div class="actions"><a class="btn primary" href="/daftar">Gabung Komunitas</a></div><p class="micro">Percakapan anggota hanya dapat diakses setelah login.</p></div></div></section>`;
 
 const googleMark = `<svg aria-hidden="true" viewBox="0 0 24 24"><path fill="#4285F4" d="M21.35 12.2c0-.7-.06-1.38-.18-2.04H12v3.86h5.24a4.5 4.5 0 0 1-1.95 2.95v2.46h3.17c1.85-1.71 2.89-4.23 2.89-7.23Z"/><path fill="#34A853" d="M12 21.5c2.64 0 4.86-.88 6.48-2.38l-3.17-2.46c-.88.6-2.01.96-3.31.96a5.96 5.96 0 0 1-5.6-4.13H3.13v2.54A9.5 9.5 0 0 0 12 21.5Z"/><path fill="#FBBC05" d="M6.4 13.49a5.7 5.7 0 0 1 0-3V7.95H3.13a9.5 9.5 0 0 0 0 8.08l3.27-2.54Z"/><path fill="#EA4335" d="M12 6.38c1.44 0 2.73.5 3.74 1.46l2.8-2.8A9.1 9.1 0 0 0 12 2.5a9.5 9.5 0 0 0-8.87 5.45L6.4 10.5A5.96 5.96 0 0 1 12 6.38Z"/></svg>`;
-const login = `<section class="auth wrap" aria-labelledby="auth-title"><div class="auth-panel"><h1 id="auth-title">Selamat datang di Migimo</h1><p>Masuk untuk terhubung dengan komunitas PMI.</p><button class="auth-google" type="button" disabled aria-describedby="auth-status">${googleMark} Lanjutkan dengan Google</button><p class="auth-switch">Belum punya akun? <a href="/daftar">Daftar</a></p><p class="auth-status" id="auth-status" role="status">Masuk dengan Google sedang disiapkan.</p></div></section>`;
+const login = `<section class="auth wrap" aria-labelledby="auth-title"><div class="auth-panel"><h1 id="auth-title">Selamat datang di Migimo</h1><p>Masuk untuk terhubung dengan komunitas PMI.</p>${authReady() ? `<a class="auth-google" href="/auth/google">${googleMark} Lanjutkan dengan Google</a>` : `<button class="auth-google" type="button" disabled aria-describedby="auth-status">${googleMark} Lanjutkan dengan Google</button>`}<p class="auth-switch">Belum punya akun? <a href="/daftar">Daftar</a></p>${authReady() ? '' : `<p class="auth-status" id="auth-status" role="status">Masuk dengan Google sedang disiapkan.</p>`}</div></section>`;
 
-const signup = `<section class="auth wrap" aria-labelledby="auth-title"><div class="auth-panel"><h1 id="auth-title">Mulai bersama Migimo</h1><p>Satu langkah lagi bergabung dengan Komunitas PMI.</p><div class="auth-form"><label for="full-name">Nama lengkap sesuai KTP</label><input id="full-name" type="text" autocomplete="name" placeholder="Tulis nama lengkap" disabled aria-describedby="signup-status"><p class="auth-help">Email diambil dari akun Google.</p><button class="auth-google auth-primary" type="button" disabled aria-describedby="signup-status">${googleMark} Daftar dengan Google</button></div><p class="auth-switch">Sudah punya akun? <a href="/login">Masuk</a></p><p class="auth-status" id="signup-status" role="status">Pendaftaran dengan Google sedang disiapkan.</p></div></section>`;
+function signup(pending) {
+  const field = pending ? `<form class="auth-form" action="/auth/signup" method="post"><label for="full-name">Nama lengkap sesuai KTP</label><input id="full-name" name="name" type="text" autocomplete="name" placeholder="Tulis nama lengkap" minlength="2" maxlength="200" required><p class="auth-help">Email diambil dari akun Google.</p><button class="auth-google auth-primary" type="submit">Bergabung dengan Komunitas</button></form>` : `<div class="auth-form"><label for="full-name">Nama lengkap sesuai KTP</label><input id="full-name" type="text" autocomplete="name" placeholder="Tulis nama lengkap" disabled aria-describedby="signup-status"><p class="auth-help">Email diambil dari akun Google.</p>${authReady() ? `<a class="auth-google auth-primary" href="/auth/google">${googleMark} Daftar dengan Google</a>` : `<button class="auth-google auth-primary" type="button" disabled aria-describedby="signup-status">${googleMark} Daftar dengan Google</button>`}</div>`;
+  return `<section class="auth wrap" aria-labelledby="auth-title"><div class="auth-panel"><h1 id="auth-title">Mulai bersama Migimo</h1><p>Satu langkah lagi bergabung dengan Komunitas PMI.</p>${field}<p class="auth-switch">Sudah punya akun? <a href="/login">Masuk</a></p>${authReady() ? '' : `<p class="auth-status" id="signup-status" role="status">Pendaftaran dengan Google sedang disiapkan.</p>`}</div></section>`;
+}
 
 function escapeAttr(value) {
   return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll("'", '&#39;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -39,8 +45,9 @@ function app() {
   return `<section class="wrap simple app-page"><div class="simple-card"><span class="eyebrow">KIRIM UANG</span><h1>Lanjutkan di Migimo App.</h1><p class="lead">Seluruh proses kirim uang berlangsung di Migimo App melalui mitra berizin. Komunitas adalah ruang untuk berbagi cerita dan pengalaman.</p>${action}<a class="back" href="/">← Kembali ke Komunitas</a></div><aside><span>↗</span><h2>Satu tujuan, jalur yang tepat.</h2><p>Komunitas membantu kami mendengar kebutuhan PMI. Transaksi tetap dilakukan di App.</p></aside></section>`;
 }
 
-export function handler(req, res) {
-  const path = new URL(req.url, 'http://localhost').pathname;
+async function serve(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  const path = url.pathname;
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Cache-Control', 'no-store');
@@ -54,14 +61,91 @@ export function handler(req, res) {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(previewPage()); return;
   }
+  if (authReady() && req.method === 'GET' && path === '/auth/google') { startGoogle(req, res); return; }
+  if (authReady() && req.method === 'GET' && path === '/auth/google/callback') {
+    const identity = await finishGoogle(req, res, url);
+    if (!identity) return;
+    const member = await findMember(identity.sub);
+    if (member) {
+      setCookie(res, 'migimo_session', sign({ memberId: member.id }, 604800), 604800);
+      redirect(res, '/community'); return;
+    }
+    setCookie(res, 'migimo_pending', sign(identity, 600), 600);
+    redirect(res, '/daftar'); return;
+  }
+  if (authReady() && req.method === 'POST' && path === '/auth/signup') {
+    const pending = unsign(cookieValue(req, 'migimo_pending'));
+    if (!validOrigin(req) || !pending?.sub || !pending.email) { res.writeHead(403); res.end(); return; }
+    const form = await readBody(req);
+    const name = (form.get('name') || '').trim().replace(/\s+/g, ' ');
+    if (name.length < 2 || name.length > 200) { res.writeHead(400); res.end('Nama lengkap harus 2–200 karakter.'); return; }
+    const member = await registerMember({ sub: pending.sub, email: pending.email, name });
+    clearCookie(res, 'migimo_pending');
+    setCookie(res, 'migimo_session', sign({ memberId: member.id }, 604800), 604800);
+    redirect(res, '/community'); return;
+  }
+  if (authReady() && req.method === 'POST' && path === '/auth/logout') {
+    if (!validOrigin(req)) { res.writeHead(403); res.end(); return; }
+    clearCookie(res, 'migimo_session'); redirect(res, '/'); return;
+  }
   if (path === '/' || path === '/login' || path === '/daftar' || path === '/app') {
-    const [title, active, body] = path === '/' ? ['Komunitas', 'home', home] : path === '/login' ? ['Masuk Komunitas', 'login', login] : path === '/daftar' ? ['Daftar Komunitas', 'signup', signup] : ['Migimo App', 'app', app()];
+    const pending = authReady() ? unsign(cookieValue(req, 'migimo_pending')) : null;
+    const [title, active, body] = path === '/' ? ['Komunitas', 'home', home] : path === '/login' ? ['Masuk Komunitas', 'login', login] : path === '/daftar' ? ['Daftar Komunitas', 'signup', signup(pending)] : ['Migimo App', 'app', app()];
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(page(title, active, body)); return;
   }
   if (path === '/community' || path.startsWith('/community/') || path === '/api/community' || path.startsWith('/api/community/')) {
-    res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify({ error: 'login_required' })); return;
+    const session = authReady() ? unsign(cookieValue(req, 'migimo_session')) : null;
+    const member = session?.memberId ? await memberById(session.memberId) : null;
+    if (!member) { res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify({ error: 'login_required' })); return; }
+    const category = ['PMI', 'PURNA_PMI', 'KELUARGA_PMI'].includes(url.searchParams.get('kategori')) ? url.searchParams.get('kategori') : null;
+    if (req.method === 'GET' && path === '/community') {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(memberHome(member, await listPosts(category, member.id), category)); return;
+    }
+    if (req.method === 'GET' && path === '/community/profil') {
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(memberProfile(member)); return;
+    }
+    const detail = path.match(/^\/community\/post\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+    if (req.method === 'GET' && detail) {
+      const post = await getPost(detail[1], member.id);
+      if (!post) { res.writeHead(404); res.end(); return; }
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(memberDiscussion(member, post, await listComments(post.id))); return;
+    }
+    if (req.method === 'POST' && path.startsWith('/api/community/')) {
+      if (!validOrigin(req)) { res.writeHead(403); res.end(); return; }
+      const form = await readBody(req);
+      if (path === '/api/community/profil') {
+        if (!['PMI', 'PURNA_PMI', 'KELUARGA_PMI'].includes(form.get('category'))) { res.writeHead(400); res.end(); return; }
+        await updateCategory(member.id, form.get('category')); redirect(res, '/community/profil'); return;
+      }
+      if (path === '/api/community/posts') {
+        const body = (form.get('body') || '').trim();
+        if (!body || body.length > 3000) { res.writeHead(400); res.end(); return; }
+        await createPost(member.id, body); redirect(res, '/community'); return;
+      }
+      const action = path.match(/^\/api\/community\/posts\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/(reaction|comments)$/i);
+      if (action) {
+        if (action[2] === 'reaction') {
+          const found = await toggleReaction(action[1], member.id);
+          if (!found) { res.writeHead(404); res.end(); return; }
+        } else {
+          const body = (form.get('body') || '').trim();
+          if (!body || body.length > 1000) { res.writeHead(400); res.end(); return; }
+          const found = await addComment(action[1], member.id, body);
+          if (!found) { res.writeHead(404); res.end(); return; }
+        }
+        redirect(res, `/community/post/${action[1]}`); return;
+      }
+    }
   }
   res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end('Halaman tidak ditemukan');
+}
+
+export function handler(req, res) {
+  serve(req, res).catch(error => {
+    console.error('Community request failed:', error?.message || error);
+    if (!res.headersSent) res.writeHead(error?.message === 'request_too_large' ? 413 : 500, { 'Content-Type': 'text/plain; charset=utf-8' });
+    if (!res.writableEnded) res.end('Permintaan belum dapat diproses.');
+  });
 }
 
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1]}`).href) {
