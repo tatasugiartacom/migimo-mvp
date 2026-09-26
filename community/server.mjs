@@ -1,10 +1,12 @@
 import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
+import { previewPage } from './preview.mjs';
 
 const logo = readFileSync(new URL('./assets/migimo-logo.png', import.meta.url));
 const favicon = readFileSync(new URL('./assets/favicon.png', import.meta.url));
 const airportPhoto = readFileSync(new URL('./assets/pmi-airport.webp', import.meta.url));
 const css = readFileSync(new URL('./style.css', import.meta.url));
+const previewCss = readFileSync(new URL('./preview.css', import.meta.url));
 const appUrl = process.env.MIGIMO_APP_URL || '';
 const port = Number(process.env.PORT || 3000);
 
@@ -47,6 +49,11 @@ export function handler(req, res) {
   if (path === '/assets/favicon.png' || path === '/favicon.ico') { res.writeHead(200, { 'Content-Type': 'image/png' }); res.end(favicon); return; }
   if (path === '/assets/pmi-airport.webp') { res.writeHead(200, { 'Content-Type': 'image/webp' }); res.end(airportPhoto); return; }
   if (path === '/style.css') { res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8' }); res.end(css); return; }
+  if (path === '/preview.css') { res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8' }); res.end(previewCss); return; }
+  if (path === '/preview/komunitas') {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(previewPage()); return;
+  }
   if (path === '/' || path === '/login' || path === '/daftar' || path === '/app') {
     const [title, active, body] = path === '/' ? ['Komunitas', 'home', home] : path === '/login' ? ['Masuk Komunitas', 'login', login] : path === '/daftar' ? ['Daftar Komunitas', 'signup', signup] : ['Migimo App', 'app', app()];
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(page(title, active, body)); return;

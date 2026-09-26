@@ -40,6 +40,17 @@ test('public pages load while member content stays server protected', async () =
     const style = await fetch(base + '/style.css');
     assert.equal(style.status, 200);
     assert.equal(style.headers.get('content-type'), 'text/css; charset=utf-8');
+    const preview = await fetch(base + '/preview/komunitas');
+    assert.equal(preview.status, 200);
+    assert.equal(preview.headers.get('x-robots-tag'), 'noindex, nofollow');
+    const previewHtml = await preview.text();
+    assert.match(previewHtml, /Pratinjau desain · konten contoh/);
+    assert.match(previewHtml, /Lengkapi profilmu/);
+    assert.match(previewHtml, /Pilih kategori anggota di Profil/);
+    assert.match(previewHtml, /Posting<\/button>/);
+    const previewStyle = await fetch(base + '/preview.css');
+    assert.equal(previewStyle.status, 200);
+    assert.match(await previewStyle.text(), /\.outline-button:hover,\.outline-button:active/);
     const health = await fetch(base + '/health');
     assert.equal(health.status, 200);
     const logo = await fetch(base + '/assets/migimo-logo.png');
