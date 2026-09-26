@@ -4,9 +4,13 @@
   "type": "module",
   "scripts": {
     "start": "node community/server.mjs",
-    "test": "node --test community/server.test.mjs"
+    "test": "node --test community/*.test.mjs"
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "jose": "6.2.12",
+    "pg": "8.23.0"
   }
 }
