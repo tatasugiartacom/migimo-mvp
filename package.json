@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "node community/server.mjs",
-    "test": "node --test community/*.test.mjs"
+    "test": "node --test community/*.test.mjs",
+    "db:migrate": "node community/db/migrate.mjs"
   },
   "engines": {
     "node": ">=20"

@@ -16,7 +16,7 @@ Kode tahap berikutnya telah disiapkan untuk login Google OIDC, pendaftaran nama 
 
 Aktivasi development:
 
-1. Siapkan PostgreSQL development yang persisten; jalankan `db/001_identity.sql`, lalu `db/002_posts.sql` pada database baru. Jangan menjalankan migrasi pada database transaksi.
+1. Siapkan PostgreSQL development yang persisten; set `DATABASE_URL` ke database baru lalu jalankan `npm run db:migrate` dari root repo. Skrip menerapkan `001_identity.sql` dan `002_posts.sql` sekali dalam transaksi. Jangan arahkan ke database transaksi.
 2. Buat Google OAuth Client tipe Web dengan redirect URI tepat `https://community-web-production-cf01.up.railway.app/auth/google/callback`.
 3. Atur `DATABASE_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `MIGIMO_SESSION_SECRET` (minimal 32 karakter acak), dan `PUBLIC_ORIGIN=https://community-web-production-cf01.up.railway.app` pada service staging. Simpan secret hanya di environment, bukan di Git.
 4. Jalankan tes alur login dan pendaftaran di staging sebelum memakai data anggota. Profil lokasi hingga desa/kelurahan, unggahan foto, pelaporan, moderasi, dan integrasi Flutter adalah tahap lanjutan. Transaksi tetap di Migimo App.
