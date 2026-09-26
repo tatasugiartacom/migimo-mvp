@@ -8,16 +8,25 @@ test('public pages load while member content stays server protected', async () =
   await new Promise(resolve => server.listen(0, resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
   try {
-    for (const path of ['/', '/app', '/login']) {
+    for (const path of ['/', '/app', '/login', '/daftar']) {
       const response = await fetch(base + path);
       assert.equal(response.status, 200);
     }
     const home = await (await fetch(base + '/')).text();
     assert.match(home, /Connecting Dreams/);
     assert.match(home, /86 negara/);
+    assert.match(home, /href="\/login">Masuk/);
+    assert.match(home, /href="\/daftar">Daftar/);
+    assert.doesNotMatch(home, /Kirim Uang di App/);
+    assert.doesNotMatch(home, /CERITA YANG BERARTI|AMAN DAN JELAS|Mulai dari sebuah cerita/);
+    for (const domain of ['facebook.com/migimoid', 'instagram.com/migimoid', 'threads.com/@migimoid', 'youtube.com/@MigimoID', 'x.com/migimoid']) {
+      assert.ok(home.includes(domain));
+    }
     assert.doesNotMatch(home, /Saat memilih cara kirim uang/);
     const login = await (await fetch(base + '/login')).text();
     assert.match(login, /Pendaftaran belum dibuka/);
+    const signup = await (await fetch(base + '/daftar')).text();
+    assert.match(signup, /Pendaftaran sedang disiapkan/);
     const app = await (await fetch(base + '/app')).text();
     assert.match(app, /Tautan Migimo App sedang disiapkan/);
     const style = await fetch(base + '/style.css');
