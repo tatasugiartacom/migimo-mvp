@@ -48,12 +48,12 @@ export function setCookie(res, name, value, maxAge, extra = '') {
 export function clearCookie(res, name) { setCookie(res, name, '', 0); }
 export function redirect(res, path) { res.writeHead(303, { Location: path }); res.end(); }
 
-export function startGoogle(req, res) {
+export function startGoogle(req, res, next = 'community') {
   const state = random();
   const nonce = random();
   const verifier = random();
   const challenge = createHash('sha256').update(verifier).digest('base64url');
-  setCookie(res, 'migimo_oauth', sign({ state, nonce, verifier }, 600), 600);
+  setCookie(res, 'migimo_oauth', sign({ state, nonce, verifier, next: next === 'admin' ? 'admin' : 'community' }, 600), 600);
   const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
   for (const [key, value] of Object.entries({
     client_id: process.env.GOOGLE_CLIENT_ID,
@@ -92,7 +92,7 @@ export async function finishGoogle(req, res, url) {
   if (payload.nonce !== flow.nonce || payload.email_verified !== true || typeof payload.sub !== 'string' || !payload.email) {
     redirect(res, '/login?error=google'); return null;
   }
-  return { sub: payload.sub, email: payload.email };
+  return { sub: payload.sub, email: payload.email, next: flow.next === 'admin' ? 'admin' : 'community' };
 }
 
 export function validOrigin(req) {

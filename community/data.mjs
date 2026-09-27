@@ -1,7 +1,7 @@
 import pg from 'pg';
 
 let pool;
-function db() {
+export function db() {
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not configured');
   pool ??= new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5, connectionTimeoutMillis: 5000 });
   return pool;
@@ -10,6 +10,7 @@ function db() {
 export async function findMember(googleSub) {
   const { rows } = await db().query(`
     SELECT m.id, m.full_name_ktp AS name, p.member_category AS category,
+           EXISTS(SELECT 1 FROM community_member_moderation s WHERE s.member_id = m.id) AS suspended,
            EXISTS(SELECT 1 FROM community_avatars a WHERE a.member_id = m.id) AS has_avatar
     FROM migimo_google_identities g
     JOIN migimo_members m ON m.id = g.member_id
@@ -21,6 +22,7 @@ export async function findMember(googleSub) {
 export async function memberById(id) {
   const { rows } = await db().query(`
     SELECT m.id, m.full_name_ktp AS name, p.member_category AS category,
+           EXISTS(SELECT 1 FROM community_member_moderation s WHERE s.member_id = m.id) AS suspended,
            EXISTS(SELECT 1 FROM community_avatars a WHERE a.member_id = m.id) AS has_avatar
     FROM migimo_members m LEFT JOIN community_profiles p ON p.member_id = m.id
     WHERE m.id = $1`, [id]);
@@ -104,7 +106,7 @@ export async function getPost(id, memberId) {
 
 export async function listComments(postId) {
   const { rows } = await db().query(`
-    SELECT c.body, c.created_at, m.full_name_ktp AS author_name, c.author_id,
+    SELECT c.id, c.body, c.created_at, m.full_name_ktp AS author_name, c.author_id,
            EXISTS(SELECT 1 FROM community_avatars a WHERE a.member_id = c.author_id) AS author_has_avatar
     FROM community_comments c JOIN migimo_members m ON m.id = c.author_id
     WHERE c.post_id = $1 AND c.deleted_at IS NULL

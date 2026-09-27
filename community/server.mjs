@@ -5,12 +5,16 @@ import { authReady, cookieValue, unsign, sign, setCookie, clearCookie, redirect,
 import { findMember, memberById, registerMember, updateCategory, saveAvatar, getAvatar, listPosts, createPost, getPost, listComments, addComment, toggleReaction } from './data.mjs';
 import { memberHome, memberProfile, memberDiscussion } from './member-view.mjs';
 import { readAvatarUpload, AvatarUploadError } from './avatar-upload.mjs';
+import { isAdmin } from './admin-access.mjs';
+import { adminLogin, adminDenied, adminDashboard } from './admin-view.mjs';
+import { uuidPattern, adminOverview, adminMembers, adminContent, adminReports, submitReport, moderateMember, moderateContent, resolveReport } from './admin-data.mjs';
 
 const logo = readFileSync(new URL('./assets/migimo-logo.png', import.meta.url));
 const favicon = readFileSync(new URL('./assets/favicon.png', import.meta.url));
 const airportPhoto = readFileSync(new URL('./assets/pmi-airport.webp', import.meta.url));
 const css = readFileSync(new URL('./style.css', import.meta.url));
 const previewCss = readFileSync(new URL('./preview.css', import.meta.url));
+const adminCss = readFileSync(new URL('./admin.css', import.meta.url));
 const appUrl = process.env.MIGIMO_APP_URL || '';
 const port = Number(process.env.PORT || 3000);
 
@@ -52,24 +56,26 @@ async function serve(req, res) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Frame-Options', 'DENY');
   if (path === '/health') { res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end('ok'); return; }
   if (path === '/assets/migimo-logo.png') { res.writeHead(200, { 'Content-Type': 'image/png' }); res.end(logo); return; }
   if (path === '/assets/favicon.png' || path === '/favicon.ico') { res.writeHead(200, { 'Content-Type': 'image/png' }); res.end(favicon); return; }
   if (path === '/assets/pmi-airport.webp') { res.writeHead(200, { 'Content-Type': 'image/webp' }); res.end(airportPhoto); return; }
   if (path === '/style.css') { res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8' }); res.end(css); return; }
   if (path === '/preview.css') { res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8' }); res.end(previewCss); return; }
+  if (path === '/admin.css') { res.writeHead(200, { 'Content-Type': 'text/css; charset=utf-8' }); res.end(adminCss); return; }
   if (path === '/preview/komunitas') {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(previewPage()); return;
   }
-  if (authReady() && req.method === 'GET' && path === '/auth/google') { startGoogle(req, res); return; }
+  if (authReady() && req.method === 'GET' && path === '/auth/google') { startGoogle(req, res, url.searchParams.get('next')); return; }
   if (authReady() && req.method === 'GET' && path === '/auth/google/callback') {
     const identity = await finishGoogle(req, res, url);
     if (!identity) return;
     const member = await findMember(identity.sub);
     if (member) {
-      setCookie(res, 'migimo_session', sign({ memberId: member.id }, 604800), 604800);
-      redirect(res, '/community'); return;
+      setCookie(res, 'migimo_session', sign({ memberId: member.id, verifiedEmail: identity.email }, 604800), 604800);
+      redirect(res, identity.next === 'admin' ? '/admin' : '/community'); return;
     }
     setCookie(res, 'migimo_pending', sign(identity, 600), 600);
     redirect(res, '/daftar'); return;
@@ -82,8 +88,8 @@ async function serve(req, res) {
     if (name.length < 2 || name.length > 200) { res.writeHead(400); res.end('Nama lengkap harus 2–200 karakter.'); return; }
     const member = await registerMember({ sub: pending.sub, email: pending.email, name });
     clearCookie(res, 'migimo_pending');
-    setCookie(res, 'migimo_session', sign({ memberId: member.id }, 604800), 604800);
-    redirect(res, '/community'); return;
+    setCookie(res, 'migimo_session', sign({ memberId: member.id, verifiedEmail: pending.email }, 604800), 604800);
+    redirect(res, pending.next === 'admin' ? '/admin' : '/community'); return;
   }
   if (authReady() && req.method === 'POST' && path === '/auth/logout') {
     if (!validOrigin(req)) { res.writeHead(403); res.end(); return; }
@@ -94,10 +100,53 @@ async function serve(req, res) {
     const [title, active, body] = path === '/' ? ['Komunitas', 'home', home] : path === '/login' ? ['Masuk Komunitas', 'login', login] : path === '/daftar' ? ['Daftar Komunitas', 'signup', signup(pending)] : ['Migimo App', 'app', app()];
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(page(title, active, body)); return;
   }
+  if (path === '/admin/login' && req.method === 'GET') {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(adminLogin()); return;
+  }
+  if (path === '/admin' || path.startsWith('/api/admin/')) {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    const session = authReady() ? unsign(cookieValue(req, 'migimo_session')) : null;
+    const member = session?.memberId && uuidPattern.test(session.memberId) ? await memberById(session.memberId) : null;
+    if (!member) {
+      if (req.method === 'GET' && path === '/admin') { redirect(res, '/admin/login'); return; }
+      res.writeHead(401); res.end('Masuk diperlukan.'); return;
+    }
+    if (!isAdmin(session, member)) {
+      res.writeHead(403, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(adminDenied()); return;
+    }
+    if (req.method === 'GET' && path === '/admin') {
+      const tab = ['ringkasan', 'anggota', 'konten', 'laporan'].includes(url.searchParams.get('tab')) ? url.searchParams.get('tab') : 'ringkasan';
+      const data = { overview: await adminOverview() };
+      if (tab === 'anggota') { data.search = (url.searchParams.get('q') || '').trim().slice(0, 100); data.members = await adminMembers(data.search); }
+      if (tab === 'konten') data.content = await adminContent();
+      if (tab === 'laporan') data.reports = await adminReports();
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(adminDashboard(member, tab, data, url.searchParams.get('hasil'))); return;
+    }
+    if (req.method === 'POST' && path.startsWith('/api/admin/')) {
+      if (!validOrigin(req)) { res.writeHead(403); res.end(); return; }
+      const form = await readBody(req);
+      const id = form.get('id') || '';
+      if (!uuidPattern.test(id)) { res.writeHead(400); res.end(); return; }
+      let changed = false;
+      let tab;
+      if (path === '/api/admin/member' && ['suspend', 'restore_member'].includes(form.get('action'))) {
+        tab = 'anggota'; changed = await moderateMember(member.id, id, form.get('action'));
+      } else if (path === '/api/admin/content' && ['post', 'comment'].includes(form.get('kind')) && ['hide', 'restore_content'].includes(form.get('action'))) {
+        tab = form.get('return') === 'laporan' ? 'laporan' : 'konten';
+        changed = await moderateContent(member.id, form.get('kind'), id, form.get('action'));
+      } else if (path === '/api/admin/report') {
+        tab = 'laporan'; changed = await resolveReport(member.id, id);
+      } else { res.writeHead(400); res.end(); return; }
+      redirect(res, `/admin?tab=${tab}&hasil=${changed ? 'ok' : 'missing'}`); return;
+    }
+  }
   if (path === '/community' || path.startsWith('/community/') || path === '/api/community' || path.startsWith('/api/community/')) {
     const session = authReady() ? unsign(cookieValue(req, 'migimo_session')) : null;
     const member = session?.memberId ? await memberById(session.memberId) : null;
     if (!member) { res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify({ error: 'login_required' })); return; }
+    if (member.suspended) { res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end('Akses Komunitas ditangguhkan.'); return; }
     const avatarMatch = path.match(/^\/community\/avatar\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
     if (req.method === 'GET' && avatarMatch) {
       const image = await getAvatar(avatarMatch[1]);
@@ -115,7 +164,7 @@ async function serve(req, res) {
     if (req.method === 'GET' && detail) {
       const post = await getPost(detail[1], member.id);
       if (!post) { res.writeHead(404); res.end(); return; }
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(memberDiscussion(member, post, await listComments(post.id))); return;
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(memberDiscussion(member, post, await listComments(post.id), url.searchParams.get('laporan') === 'terkirim' ? 'Laporan berhasil dikirim untuk ditinjau.' : '')); return;
     }
     if (req.method === 'POST' && path.startsWith('/api/community/')) {
       if (!validOrigin(req)) { res.writeHead(403); res.end(); return; }
@@ -132,6 +181,16 @@ async function serve(req, res) {
         return;
       }
       const form = await readBody(req);
+      if (path === '/api/community/reports') {
+        const kind = form.get('kind');
+        const id = form.get('id') || '';
+        const postId = form.get('postId') || '';
+        const reason = (form.get('reason') || '').trim();
+        if (!['post', 'comment'].includes(kind) || !uuidPattern.test(id) || !uuidPattern.test(postId) || reason.length < 3 || reason.length > 500) { res.writeHead(400); res.end(); return; }
+        if (kind === 'post' && id !== postId) { res.writeHead(400); res.end(); return; }
+        if (!await submitReport(member.id, kind, id, postId, reason)) { res.writeHead(404); res.end(); return; }
+        redirect(res, `/community/post/${postId}?laporan=terkirim`); return;
+      }
       if (path === '/api/community/profil') {
         if (!['PMI', 'PURNA_PMI', 'KELUARGA_PMI'].includes(form.get('category'))) { res.writeHead(400); res.end(); return; }
         await updateCategory(member.id, form.get('category')); redirect(res, '/community/profil'); return;

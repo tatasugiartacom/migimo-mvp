@@ -1,0 +1,33 @@
+import { escapeHtml } from './member-view.mjs';
+
+const escape = escapeHtml;
+const date = value => new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' }).format(new Date(value));
+const label = { PMI: 'PMI', PURNA_PMI: 'Purna PMI', KELUARGA_PMI: 'Keluarga PMI' };
+
+function shell(title, tab, name, body) {
+  const tabs = [['ringkasan', 'Ringkasan'], ['anggota', 'Anggota'], ['konten', 'Konten'], ['laporan', 'Laporan']];
+  return `<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${escape(title)} · Admin Migimo</title><link rel="icon" href="/assets/favicon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/admin.css"></head><body><a class="skip" href="#main">Lewati ke konten</a><header class="admin-header"><div class="container header-inner"><a href="/admin" aria-label="Admin Migimo"><img src="/assets/migimo-logo.png" alt="Migimo"></a><span class="admin-label">Admin Komunitas</span><a class="back" href="/community">Lihat Komunitas</a><form action="/auth/logout" method="post"><button type="submit">Keluar</button></form></div></header><div class="container admin-layout"><nav class="admin-nav" aria-label="Navigasi admin">${tabs.map(([key, text]) => `<a href="/admin${key === 'ringkasan' ? '' : `?tab=${key}`}" ${tab === key ? 'aria-current="page"' : ''}>${text}</a>`).join('')}</nav><main id="main"><p class="eyebrow">MIGIMO · KOMUNITAS</p><h1>${escape(title)}</h1><p class="subtitle">Halo, ${escape(name)}. Kelola komunitas dari satu tempat.</p>${body}</main></div></body></html>`;
+}
+
+const empty = message => `<p class="empty">${escape(message)}</p>`;
+const status = hidden => `<span class="status ${hidden ? 'muted' : 'active'}">${hidden ? 'Disembunyikan' : 'Aktif'}</span>`;
+const action = (target, fields, labelText, secondary = false) => `<form action="/api/admin/${target}" method="post">${Object.entries(fields).map(([key, value]) => `<input type="hidden" name="${key}" value="${escape(value)}">`).join('')}<button class="${secondary ? 'secondary' : ''}" type="submit">${escape(labelText)}</button></form>`;
+
+export function adminLogin() {
+  return shell('Masuk Admin', 'ringkasan', 'Admin', `<section class="panel login"><h2>Dashboard Admin Migimo</h2><p>Masuk dengan akun Google admin yang ditetapkan untuk mengelola Komunitas.</p><a class="button" href="/auth/google?next=admin">Masuk dengan Google</a></section>`);
+}
+
+export function adminDenied() {
+  return shell('Akses dibatasi', 'ringkasan', 'Anggota', `<section class="panel login"><h2>Akun ini tidak memiliki akses admin</h2><p>Jika kamu memiliki akun admin lain, keluar lalu masuk dengan akun Google tersebut.</p></section>`);
+}
+
+export function adminDashboard(member, tab, data, flash = '') {
+  const notice = flash === 'ok' ? '<p class="notice" role="status">Perubahan berhasil disimpan.</p>' : flash === 'missing' ? '<p class="notice error" role="alert">Data tidak ditemukan atau sudah diperbarui.</p>' : '';
+  const summary = `<div class="metrics">${[['Anggota', data.overview.members], ['Posting', data.overview.posts], ['Komentar', data.overview.comments], ['Laporan baru', data.overview.open_reports]].map(([name, count]) => `<div class="metric"><span>${name}</span><strong>${count}</strong></div>`).join('')}</div><section class="panel"><h2>Moderasi Komunitas</h2><p>${data.overview.suspended} akun ditangguhkan. Periksa laporan anggota, sembunyikan konten bila perlu, dan catat penyelesaiannya melalui dashboard.</p><a class="text-link" href="/admin?tab=laporan">Lihat laporan →</a></section>`;
+  const members = `<form class="search" action="/admin" method="get"><input type="hidden" name="tab" value="anggota"><label for="search">Cari anggota</label><div><input id="search" name="q" value="${escape(data.search || '')}" placeholder="Nama atau email" maxlength="100"><button type="submit">Cari</button></div></form><div class="records">${data.members?.length ? data.members.map(m => `<article class="record"><div class="record-top"><div><strong>${escape(m.name)}</strong><small>${escape(m.email)}</small></div>${status(m.suspended)}</div><p>${escape(label[m.category] || 'Kategori belum diisi')} · Bergabung ${date(m.created_at)}</p>${m.id === member.id ? '<small>Akun admin aktif</small>' : action('member', { id: m.id, action: m.suspended ? 'restore_member' : 'suspend' }, m.suspended ? 'Aktifkan kembali' : 'Tangguhkan', !m.suspended)}</article>`).join('') : empty('Tidak ada anggota yang cocok.')}</div>`;
+  const contents = `<div class="records">${data.content?.length ? data.content.map(item => `<article class="record"><div class="record-top"><div><strong>${item.kind === 'post' ? 'Posting' : 'Komentar'} · ${escape(item.author_name)}</strong><small>${date(item.created_at)}</small></div>${status(item.deleted_at)}</div><p class="body-preview">${escape(item.body)}</p><div class="record-actions"><a href="/community/post/${escape(item.post_id)}">Lihat diskusi</a>${action('content', { kind: item.kind, id: item.id, action: item.deleted_at ? 'restore_content' : 'hide' }, item.deleted_at ? 'Tampilkan kembali' : 'Sembunyikan', !item.deleted_at)}</div></article>`).join('') : empty('Belum ada konten.')}</div>`;
+  const reports = `<div class="records">${data.reports?.length ? data.reports.map(r => `<article class="record"><div class="record-top"><div><strong>Laporan ${r.target_kind === 'post' ? 'posting' : 'komentar'}</strong><small>${escape(r.reporter_name)} · ${date(r.created_at)}</small></div><span class="status ${r.resolved_at ? 'muted' : 'pending'}">${r.resolved_at ? 'Selesai' : 'Perlu ditinjau'}</span></div><p><b>Alasan:</b> ${escape(r.reason)}</p><p class="body-preview">${escape(r.target_body || 'Konten tidak tersedia.')}</p><div class="record-actions">${!r.resolved_at && r.target_body && !r.target_deleted_at ? action('content', { kind: r.target_kind, id: r.target_id, action: 'hide', return: 'laporan' }, 'Sembunyikan konten', true) : ''}${!r.resolved_at ? action('report', { id: r.id }, 'Tandai selesai') : ''}</div></article>`).join('') : empty('Belum ada laporan.')}</div>`;
+  const sections = { ringkasan: summary, anggota: members, konten: contents, laporan: reports };
+  const titles = { ringkasan: 'Ringkasan', anggota: 'Anggota', konten: 'Konten', laporan: 'Laporan' };
+  return shell(titles[tab] || 'Ringkasan', tab, member.name, notice + (sections[tab] || summary));
+}

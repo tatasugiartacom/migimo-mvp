@@ -5,7 +5,7 @@ const url = process.env.DATABASE_URL;
 if (!url) throw new Error('DATABASE_URL is required for migrations');
 
 const client = new pg.Client({ connectionString: url, connectionTimeoutMillis: 5000 });
-const migrations = ['001_identity.sql', '002_posts.sql', '003_avatars.sql'];
+const migrations = ['001_identity.sql', '002_posts.sql', '003_avatars.sql', '004_moderation.sql'];
 
 try {
   await client.connect();

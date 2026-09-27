@@ -23,19 +23,23 @@ function layout(member, selected, content) {
   <main id="feed" class="feed">${content}</main></div><nav class="mobile-nav" aria-label="Menu ponsel"><a class="${selected === 'home' ? 'selected' : ''}" href="/community">${svg('home')}Beranda</a><a href="/community#diskusi">${svg('chat')}Diskusi</a><a class="${selected === 'profile' ? 'selected' : ''}" href="/community/profil">${svg('user')}Profil</a><form action="/auth/logout" method="post"><button type="submit">${svg('logout')}Keluar</button></form></nav></body></html>`;
 }
 
-function card(post, detail = false) {
+function reportControl(kind, id, postId) {
+  return `<details class="report-control"><summary>Laporkan</summary><form action="/api/community/reports" method="post"><input type="hidden" name="kind" value="${kind}"><input type="hidden" name="id" value="${encodeURIComponent(id)}"><input type="hidden" name="postId" value="${encodeURIComponent(postId)}"><label for="reason-${encodeURIComponent(id)}">Alasan laporan</label><textarea id="reason-${encodeURIComponent(id)}" name="reason" minlength="3" maxlength="500" required placeholder="Jelaskan masalahnya secara singkat"></textarea><button class="outline-button" type="submit">Kirim laporan</button></form></details>`;
+}
+
+function card(post, detail = false, viewerId = null) {
   const id = encodeURIComponent(post.id);
   const author = escapeHtml(post.author_name);
   const category = categories[post.author_category] ? `<span class="official-tag">${categories[post.author_category]}</span>` : '';
   const body = escapeHtml(post.body).replaceAll('\n', '<br>');
-  return `<article class="post" id="post-${id}"><div class="post-author">${avatar(post.author_name, post.author_id, post.author_has_avatar)}<div><div class="name-row"><strong>${author}</strong>${category}</div><small>${dateLabel(post.created_at)}</small></div></div><p class="post-body">${body}</p><div class="post-actions"><form method="post" action="/api/community/posts/${id}/reaction"><button class="text-action ${post.liked ? 'liked' : ''}" type="submit" aria-label="${post.liked ? 'Batal suka' : 'Suka'}">${svg('heart')} Suka${post.reactions ? ` · ${post.reactions}` : ''}</button></form><a href="/community/post/${id}">${svg('chat')} Komentar${post.comments ? ` · ${post.comments}` : ''}</a><a href="/community/post/${id}">${svg('share')} Bagikan</a></div></article>`;
+  return `<article class="post" id="post-${id}"><div class="post-author">${avatar(post.author_name, post.author_id, post.author_has_avatar)}<div><div class="name-row"><strong>${author}</strong>${category}</div><small>${dateLabel(post.created_at)}</small></div></div><p class="post-body">${body}</p><div class="post-actions"><form method="post" action="/api/community/posts/${id}/reaction"><button class="text-action ${post.liked ? 'liked' : ''}" type="submit" aria-label="${post.liked ? 'Batal suka' : 'Suka'}">${svg('heart')} Suka${post.reactions ? ` · ${post.reactions}` : ''}</button></form><a href="/community/post/${id}">${svg('chat')} Komentar${post.comments ? ` · ${post.comments}` : ''}</a><a href="/community/post/${id}">${svg('share')} Bagikan</a>${post.author_id !== viewerId ? reportControl('post', post.id, post.id) : ''}</div></article>`;
 }
 
 export function memberHome(member, posts, category = null) {
   const filters = [[null, 'Semua'], ...Object.entries(categories)].map(([key, label]) => `<a href="/community${key ? `?kategori=${key}` : ''}" ${key === category ? 'class="selected" aria-current="page"' : ''}>${label}</a>`).join('');
   const prompt = member.category ? '' : `<section class="profile-prompt" aria-label="Lengkapi profil"><span class="prompt-icon">${svg('user')}</span><strong>Lengkapi profilmu</strong><span class="prompt-message">Pilih kategori anggota di Profil.</span><a class="outline-button" href="/community/profil">Isi Profil</a></section>`;
   const composer = `<form class="composer" action="/api/community/posts" method="post"><div class="composer-top">${avatar(member.name, member.id, member.has_avatar)}<label class="visually-hidden" for="post-body">Apa yang ingin kamu bagikan?</label><textarea id="post-body" name="body" maxlength="3000" required placeholder="Apa yang ingin kamu bagikan?"></textarea></div><div class="composer-bottom"><span class="photo-label" aria-label="Foto akan tersedia pada tahap berikutnya">Foto</span><button type="submit" class="outline-button">Posting</button></div></form>`;
-  const content = `<h1>Ruang cerita PMI</h1><p class="intro">Terhubung dari 86 negara penempatan hingga kampung halaman.</p>${prompt}${composer}<nav class="filters" aria-label="Filter kategori post">${filters}</nav><div id="diskusi">${posts.length ? posts.map(post => card(post)).join('') : '<p class="empty-feed">Belum ada diskusi. Mulai percakapan pertama.</p>'}</div>`;
+  const content = `<h1>Ruang cerita PMI</h1><p class="intro">Terhubung dari 86 negara penempatan hingga kampung halaman.</p>${prompt}${composer}<nav class="filters" aria-label="Filter kategori post">${filters}</nav><div id="diskusi">${posts.length ? posts.map(post => card(post, false, member.id)).join('') : '<p class="empty-feed">Belum ada diskusi. Mulai percakapan pertama.</p>'}</div>`;
   return layout(member, 'home', content);
 }
 
@@ -46,9 +50,9 @@ export function memberProfile(member, feedback = '') {
   return layout(member, 'profile', content);
 }
 
-export function memberDiscussion(member, post, comments) {
+export function memberDiscussion(member, post, comments, feedback = '') {
   const id = encodeURIComponent(post.id);
-  const replies = comments.map(comment => `<div class="reply"><div class="reply-author">${avatar(comment.author_name, comment.author_id, comment.author_has_avatar)}<div><strong>${escapeHtml(comment.author_name)}</strong><small>${dateLabel(comment.created_at)}</small></div></div><p>${escapeHtml(comment.body).replaceAll('\n', '<br>')}</p></div>`).join('');
-  const content = `<a class="back-link" href="/community">← Kembali ke Komunitas</a><h1>Diskusi</h1>${card(post, true)}<section class="replies"><h2>Komentar</h2>${replies || '<p>Belum ada komentar.</p>'}<form method="post" action="/api/community/posts/${id}/comments"><label for="comment">Tulis komentar</label><textarea id="comment" name="body" maxlength="1000" required></textarea><button class="outline-button" type="submit">Kirim komentar</button></form></section>`;
+  const replies = comments.map(comment => `<div class="reply"><div class="reply-author">${avatar(comment.author_name, comment.author_id, comment.author_has_avatar)}<div><strong>${escapeHtml(comment.author_name)}</strong><small>${dateLabel(comment.created_at)}</small></div></div><p>${escapeHtml(comment.body).replaceAll('\n', '<br>')}</p>${comment.author_id !== member.id ? reportControl('comment', comment.id, post.id) : ''}</div>`).join('');
+  const content = `<a class="back-link" href="/community">← Kembali ke Komunitas</a><h1>Diskusi</h1>${feedback ? `<p class="avatar-feedback" role="status">${escapeHtml(feedback)}</p>` : ''}${card(post, true, member.id)}<section class="replies"><h2>Komentar</h2>${replies || '<p>Belum ada komentar.</p>'}<form method="post" action="/api/community/posts/${id}/comments"><label for="comment">Tulis komentar</label><textarea id="comment" name="body" maxlength="1000" required></textarea><button class="outline-button" type="submit">Kirim komentar</button></form></section>`;
   return layout(member, 'home', content);
 }

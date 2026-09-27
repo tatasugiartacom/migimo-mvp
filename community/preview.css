@@ -150,3 +150,17 @@ body{color:var(--ink)}
 .reply-author{display:flex;align-items:center;gap:10px}
 .reply-author small{display:block;margin-left:0}
 @media(max-width:640px){.profile-photo{align-items:flex-start;gap:12px}.profile-photo .avatar-large{width:62px;height:62px}.profile-photo input[type=file]{max-width:210px}}
+
+/* Member reports remain compact until someone opens the form. */
+.member-page .post-actions{flex-wrap:wrap}
+.report-control{position:relative;color:#526781;font-size:13px}
+.report-control summary{cursor:pointer;list-style:none}
+.report-control summary::-webkit-details-marker{display:none}
+.report-control summary:hover,.report-control summary:focus-visible{color:var(--green)}
+.post-actions .report-control{margin-left:auto}
+.post-actions .report-control form{position:absolute;right:0;top:28px;z-index:3;width:min(280px,80vw);box-shadow:0 12px 28px #15302122}
+.member-page .report-control form{display:grid;gap:8px;margin:10px 0 0;padding:14px;border:1px solid var(--line);border-radius:12px;background:white;color:var(--ink)}
+.member-page .report-control textarea{width:100%;min-height:70px;resize:vertical;padding:9px;border:1px solid var(--line);border-radius:8px;font:inherit}
+.member-page .report-control .outline-button{justify-self:start;min-width:0;min-height:34px;font-size:12px}
+.reply .report-control{margin-top:8px}
+.reply .report-control form{max-width:320px}
