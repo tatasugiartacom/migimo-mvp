@@ -5,7 +5,8 @@ const icons = {
   search: '<circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/>',
   bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 9h18c0-1-3-2-3-9ZM10 21h4"/>',
   heart: '<path d="M20.8 5.8a5.5 5.5 0 0 0-7.8 0L12 6.9l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 22l8.8-8.4a5.5 5.5 0 0 0 0-7.8Z"/>',
-  share: '<path d="M14 4 21 12l-7 7v-4c-6 0-9 2-11 5 0-7 3-11 11-12z"/>'
+  share: '<path d="M14 4 21 12l-7 7v-4c-6 0-9 2-11 5 0-7 3-11 11-12z"/>',
+  logout: '<path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5M14 16l4-4-4-4m4 4H8"/>'
 };
 const svg = name => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[name]}</svg>`;
 export const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch]);
@@ -19,7 +20,7 @@ function layout(member, selected, content) {
   return `<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#547132"><title>Komunitas · Migimo</title><link rel="icon" type="image/png" href="/assets/favicon.png"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="/preview.css"></head><body class="member-page"><a class="skip" href="#feed">Lewati ke konten</a>
   <header class="topbar"><div class="topbar-inner"><a class="brand" href="/community" aria-label="Beranda Migimo"><img src="/assets/migimo-logo.png" alt="Migimo"></a><nav class="topnav" aria-label="Navigasi utama"><a class="current" href="/community" aria-current="page">Komunitas</a><a href="/app">Kirim Uang ↗</a></nav><div class="search-shell">${svg('search')}<span>Cari diskusi atau anggota</span></div><div class="user-shell">${svg('bell')}${avatar(member.name, member.id, member.has_avatar)}<span class="user-name">${name}</span></div></div></header>
   <div class="layout"><aside class="side-nav" aria-label="Menu anggota"><a class="side-item ${selected === 'home' ? 'selected' : ''}" href="/community">${svg('home')}<span>Beranda</span></a><a class="side-item ${selected === 'profile' ? 'selected' : ''}" href="/community/profil">${svg('user')}<span>Profil</span></a><a class="side-item" href="/community#diskusi">${svg('chat')}<span>Diskusi</span></a><form action="/auth/logout" method="post"><button class="side-item logout" type="submit">Keluar</button></form></aside>
-  <main id="feed" class="feed">${content}</main></div><nav class="mobile-nav" aria-label="Menu ponsel"><a class="${selected === 'home' ? 'selected' : ''}" href="/community">${svg('home')}Beranda</a><a href="/community#diskusi">${svg('chat')}Diskusi</a><a class="${selected === 'profile' ? 'selected' : ''}" href="/community/profil">${svg('user')}Profil</a></nav></body></html>`;
+  <main id="feed" class="feed">${content}</main></div><nav class="mobile-nav" aria-label="Menu ponsel"><a class="${selected === 'home' ? 'selected' : ''}" href="/community">${svg('home')}Beranda</a><a href="/community#diskusi">${svg('chat')}Diskusi</a><a class="${selected === 'profile' ? 'selected' : ''}" href="/community/profil">${svg('user')}Profil</a><form action="/auth/logout" method="post"><button type="submit">${svg('logout')}Keluar</button></form></nav></body></html>`;
 }
 
 function card(post, detail = false) {
