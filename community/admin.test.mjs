@@ -1,10 +1,10 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { createServer } from 'node:http';
-import { isAdmin } from './admin-access.mjs';
+import { adminEmailAllowed, isAdmin } from './admin-access.mjs';
 import { adminDashboard, adminLogin } from './admin-view.mjs';
 import { memberHome, memberDiscussion } from './member-view.mjs';
-import { handler } from './server.mjs';
+import { handler, signup } from './server.mjs';
 
 const id = '96061316-6a30-46b5-baf6-dad440d68f98';
 
@@ -14,10 +14,27 @@ test('admin requires a verified Google email bound to the signed member session'
   try {
     const member = { id, name: 'Owner', suspended: false };
     assert.equal(isAdmin({ memberId: id, verifiedEmail: 'OWNER@example.com' }, member), true);
+    assert.equal(adminEmailAllowed('owner@example.com'), true);
     assert.equal(isAdmin({ memberId: id }, member), false);
     assert.equal(isAdmin({ memberId: id, verifiedEmail: 'other@example.com' }, member), false);
     assert.equal(isAdmin({ memberId: 'other', verifiedEmail: 'owner@example.com' }, member), false);
     assert.equal(isAdmin({ memberId: id, verifiedEmail: 'owner@example.com' }, { ...member, suspended: true }), false);
+  } finally {
+    if (old === undefined) delete process.env.MIGIMO_ADMIN_EMAIL;
+    else process.env.MIGIMO_ADMIN_EMAIL = old;
+  }
+});
+
+test('first admin login shows an admin-specific identity step and keeps ordinary signup copy', () => {
+  const old = process.env.MIGIMO_ADMIN_EMAIL;
+  process.env.MIGIMO_ADMIN_EMAIL = 'owner@example.com';
+  try {
+    const admin = signup({ email: 'owner@example.com', next: 'admin' });
+    assert.match(admin, /Aktifkan akun Admin Migimo/);
+    assert.match(admin, /langsung masuk ke Dashboard Admin/);
+    assert.match(admin, /Aktifkan akun admin/);
+    assert.doesNotMatch(admin, /Satu langkah lagi bergabung/);
+    assert.match(signup({ email: 'person@example.com', next: 'community' }), /Satu langkah lagi bergabung dengan Komunitas PMI/);
   } finally {
     if (old === undefined) delete process.env.MIGIMO_ADMIN_EMAIL;
     else process.env.MIGIMO_ADMIN_EMAIL = old;

@@ -13,8 +13,8 @@ const empty = message => `<p class="empty">${escape(message)}</p>`;
 const status = hidden => `<span class="status ${hidden ? 'muted' : 'active'}">${hidden ? 'Disembunyikan' : 'Aktif'}</span>`;
 const action = (target, fields, labelText, secondary = false) => `<form action="/api/admin/${target}" method="post">${Object.entries(fields).map(([key, value]) => `<input type="hidden" name="${key}" value="${escape(value)}">`).join('')}<button class="${secondary ? 'secondary' : ''}" type="submit">${escape(labelText)}</button></form>`;
 
-export function adminLogin() {
-  return shell('Masuk Admin', 'ringkasan', 'Admin', `<section class="panel login"><h2>Dashboard Admin Migimo</h2><p>Masuk dengan akun Google admin yang ditetapkan untuk mengelola Komunitas.</p><a class="button" href="/auth/google?next=admin">Masuk dengan Google</a></section>`, { showNav: false, showLogout: false });
+export function adminLogin(error = '') {
+  return shell('Masuk Admin', 'ringkasan', 'Admin', `<section class="panel login"><h2>Dashboard Admin Migimo</h2><p>Masuk dengan akun Google admin yang ditetapkan untuk mengelola Komunitas.</p>${error === 'account' ? '<p class="notice error" role="alert">Akun Google yang dipilih bukan akun admin yang ditetapkan. Pilih akun Google admin Migimo.</p>' : ''}<a class="button" href="/auth/google?next=admin">Masuk dengan Google</a></section>`, { showNav: false, showLogout: false });
 }
 
 export function adminDenied() {

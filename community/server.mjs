@@ -5,7 +5,7 @@ import { authReady, cookieValue, unsign, sign, setCookie, clearCookie, redirect,
 import { findMember, memberById, registerMember, updateCategory, saveAvatar, getAvatar, listPosts, createPost, getPost, listComments, addComment, toggleReaction } from './data.mjs';
 import { memberHome, memberProfile, memberDiscussion } from './member-view.mjs';
 import { readAvatarUpload, AvatarUploadError } from './avatar-upload.mjs';
-import { isAdmin } from './admin-access.mjs';
+import { adminEmailAllowed, isAdmin } from './admin-access.mjs';
 import { adminLogin, adminDenied, adminDashboard } from './admin-view.mjs';
 import { uuidPattern, adminOverview, adminMembers, adminContent, adminReports, submitReport, moderateMember, moderateContent, resolveReport } from './admin-data.mjs';
 
@@ -36,9 +36,10 @@ const home = `<section class="hero"><div class="wrap hero-grid"><div class="hero
 const googleMark = `<svg aria-hidden="true" viewBox="0 0 24 24"><path fill="#4285F4" d="M21.35 12.2c0-.7-.06-1.38-.18-2.04H12v3.86h5.24a4.5 4.5 0 0 1-1.95 2.95v2.46h3.17c1.85-1.71 2.89-4.23 2.89-7.23Z"/><path fill="#34A853" d="M12 21.5c2.64 0 4.86-.88 6.48-2.38l-3.17-2.46c-.88.6-2.01.96-3.31.96a5.96 5.96 0 0 1-5.6-4.13H3.13v2.54A9.5 9.5 0 0 0 12 21.5Z"/><path fill="#FBBC05" d="M6.4 13.49a5.7 5.7 0 0 1 0-3V7.95H3.13a9.5 9.5 0 0 0 0 8.08l3.27-2.54Z"/><path fill="#EA4335" d="M12 6.38c1.44 0 2.73.5 3.74 1.46l2.8-2.8A9.1 9.1 0 0 0 12 2.5a9.5 9.5 0 0 0-8.87 5.45L6.4 10.5A5.96 5.96 0 0 1 12 6.38Z"/></svg>`;
 const login = `<section class="auth wrap" aria-labelledby="auth-title"><div class="auth-panel"><h1 id="auth-title">Selamat datang di Migimo</h1><p>Masuk untuk terhubung dengan komunitas PMI.</p>${authReady() ? `<a class="auth-google" href="/auth/google">${googleMark} Lanjutkan dengan Google</a>` : `<button class="auth-google" type="button" disabled aria-describedby="auth-status">${googleMark} Lanjutkan dengan Google</button>`}<p class="auth-switch">Belum punya akun? <a href="/daftar">Daftar</a></p>${authReady() ? '' : `<p class="auth-status" id="auth-status" role="status">Masuk dengan Google sedang disiapkan.</p>`}</div></section>`;
 
-function signup(pending) {
-  const field = pending ? `<form class="auth-form" action="/auth/signup" method="post"><label for="full-name">Nama lengkap sesuai KTP</label><input id="full-name" name="name" type="text" autocomplete="name" placeholder="Tulis nama lengkap" minlength="2" maxlength="200" required><p class="auth-help">Email diambil dari akun Google.</p><button class="auth-google auth-primary" type="submit">Bergabung dengan Komunitas</button></form>` : `<div class="auth-form"><label for="full-name">Nama lengkap sesuai KTP</label><input id="full-name" type="text" autocomplete="name" placeholder="Tulis nama lengkap" disabled aria-describedby="signup-status"><p class="auth-help">Email diambil dari akun Google.</p>${authReady() ? `<a class="auth-google auth-primary" href="/auth/google">${googleMark} Daftar dengan Google</a>` : `<button class="auth-google auth-primary" type="button" disabled aria-describedby="signup-status">${googleMark} Daftar dengan Google</button>`}</div>`;
-  return `<section class="auth wrap" aria-labelledby="auth-title"><div class="auth-panel"><h1 id="auth-title">Mulai bersama Migimo</h1><p>Satu langkah lagi bergabung dengan Komunitas PMI.</p>${field}<p class="auth-switch">Sudah punya akun? <a href="/login">Masuk</a></p>${authReady() ? '' : `<p class="auth-status" id="signup-status" role="status">Pendaftaran dengan Google sedang disiapkan.</p>`}</div></section>`;
+export function signup(pending) {
+  const adminSetup = pending?.next === 'admin' && adminEmailAllowed(pending.email);
+  const field = pending ? `<form class="auth-form" action="/auth/signup" method="post"><label for="full-name">Nama lengkap sesuai KTP</label><input id="full-name" name="name" type="text" autocomplete="name" placeholder="Tulis nama lengkap" minlength="2" maxlength="200" required><p class="auth-help">Email diambil dari akun Google.</p><button class="auth-google auth-primary" type="submit">${adminSetup ? 'Aktifkan akun admin' : 'Bergabung dengan Komunitas'}</button></form>` : `<div class="auth-form"><label for="full-name">Nama lengkap sesuai KTP</label><input id="full-name" type="text" autocomplete="name" placeholder="Tulis nama lengkap" disabled aria-describedby="signup-status"><p class="auth-help">Email diambil dari akun Google.</p>${authReady() ? `<a class="auth-google auth-primary" href="/auth/google">${googleMark} Daftar dengan Google</a>` : `<button class="auth-google auth-primary" type="button" disabled aria-describedby="signup-status">${googleMark} Daftar dengan Google</button>`}</div>`;
+  return `<section class="auth wrap" aria-labelledby="auth-title"><div class="auth-panel"><h1 id="auth-title">${adminSetup ? 'Aktifkan akun Admin Migimo' : 'Mulai bersama Migimo'}</h1><p>${adminSetup ? 'Lengkapi nama satu kali untuk Migimo Identity. Setelah disimpan, kamu langsung masuk ke Dashboard Admin.' : 'Satu langkah lagi bergabung dengan Komunitas PMI.'}</p>${field}<p class="auth-switch">${adminSetup ? '<a href="/admin/login">Kembali ke login admin</a>' : 'Sudah punya akun? <a href="/login">Masuk</a>'}</p>${authReady() ? '' : `<p class="auth-status" id="signup-status" role="status">Pendaftaran dengan Google sedang disiapkan.</p>`}</div></section>`;
 }
 
 function escapeAttr(value) {
@@ -72,6 +73,7 @@ async function serve(req, res) {
   if (authReady() && req.method === 'GET' && path === '/auth/google/callback') {
     const identity = await finishGoogle(req, res, url);
     if (!identity) return;
+    if (identity.next === 'admin' && !adminEmailAllowed(identity.email)) { redirect(res, '/admin/login?error=account'); return; }
     const member = await findMember(identity.sub);
     if (member) {
       setCookie(res, 'migimo_session', sign({ memberId: member.id, verifiedEmail: identity.email }, 604800), 604800);
@@ -82,7 +84,7 @@ async function serve(req, res) {
   }
   if (authReady() && req.method === 'POST' && path === '/auth/signup') {
     const pending = unsign(cookieValue(req, 'migimo_pending'));
-    if (!validOrigin(req) || !pending?.sub || !pending.email) { res.writeHead(403); res.end(); return; }
+    if (!validOrigin(req) || !pending?.sub || !pending.email || (pending.next === 'admin' && !adminEmailAllowed(pending.email))) { res.writeHead(403); res.end(); return; }
     const form = await readBody(req);
     const name = (form.get('name') || '').trim().replace(/\s+/g, ' ');
     if (name.length < 2 || name.length > 200) { res.writeHead(400); res.end('Nama lengkap harus 2–200 karakter.'); return; }
@@ -102,7 +104,7 @@ async function serve(req, res) {
   }
   if (path === '/admin/login' && req.method === 'GET') {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(adminLogin()); return;
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(adminLogin(url.searchParams.get('error'))); return;
   }
   if (path === '/admin' || path.startsWith('/api/admin/')) {
     res.setHeader('X-Robots-Tag', 'noindex, nofollow');
