@@ -31,6 +31,8 @@ test('member views escape names and posts while keeping approved layout', () => 
   assert.doesNotMatch(home, /<script>|<img src=x/);
   assert.match(home, /action="\/api\/community\/posts"/);
   assert.match(memberProfile(member), /Purna PMI/);
+  assert.match(memberProfile(member), /enctype="multipart\/form-data"/);
+  assert.match(memberProfile({ ...member, id: '96061316-6a30-46b5-baf6-dad440d68f98', has_avatar: true }), /\/community\/avatar\/96061316-6a30-46b5-baf6-dad440d68f98/);
   assert.match(memberDiscussion(member, post, [{ author_name: '<i>hi</i>', body: '<svg>', created_at: '2026-09-26T10:00:00Z' }]), /&lt;svg&gt;/);
 });
 

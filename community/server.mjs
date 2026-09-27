@@ -2,8 +2,9 @@ import { createServer } from 'node:http';
 import { readFileSync } from 'node:fs';
 import { previewPage } from './preview.mjs';
 import { authReady, cookieValue, unsign, sign, setCookie, clearCookie, redirect, startGoogle, finishGoogle, validOrigin, readBody } from './auth.mjs';
-import { findMember, memberById, registerMember, updateCategory, listPosts, createPost, getPost, listComments, addComment, toggleReaction } from './data.mjs';
+import { findMember, memberById, registerMember, updateCategory, saveAvatar, getAvatar, listPosts, createPost, getPost, listComments, addComment, toggleReaction } from './data.mjs';
 import { memberHome, memberProfile, memberDiscussion } from './member-view.mjs';
+import { readAvatarUpload, AvatarUploadError } from './avatar-upload.mjs';
 
 const logo = readFileSync(new URL('./assets/migimo-logo.png', import.meta.url));
 const favicon = readFileSync(new URL('./assets/favicon.png', import.meta.url));
@@ -97,12 +98,18 @@ async function serve(req, res) {
     const session = authReady() ? unsign(cookieValue(req, 'migimo_session')) : null;
     const member = session?.memberId ? await memberById(session.memberId) : null;
     if (!member) { res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' }); res.end(JSON.stringify({ error: 'login_required' })); return; }
+    const avatarMatch = path.match(/^\/community\/avatar\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+    if (req.method === 'GET' && avatarMatch) {
+      const image = await getAvatar(avatarMatch[1]);
+      if (!image) { res.writeHead(404); res.end(); return; }
+      res.writeHead(200, { 'Content-Type': 'image/webp', 'Cache-Control': 'private, no-store' }); res.end(image); return;
+    }
     const category = ['PMI', 'PURNA_PMI', 'KELUARGA_PMI'].includes(url.searchParams.get('kategori')) ? url.searchParams.get('kategori') : null;
     if (req.method === 'GET' && path === '/community') {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(memberHome(member, await listPosts(category, member.id), category)); return;
     }
     if (req.method === 'GET' && path === '/community/profil') {
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(memberProfile(member)); return;
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' }); res.end(memberProfile(member, url.searchParams.get('foto') === 'tersimpan' ? 'Foto profil berhasil diperbarui.' : '')); return;
     }
     const detail = path.match(/^\/community\/post\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
     if (req.method === 'GET' && detail) {
@@ -112,6 +119,18 @@ async function serve(req, res) {
     }
     if (req.method === 'POST' && path.startsWith('/api/community/')) {
       if (!validOrigin(req)) { res.writeHead(403); res.end(); return; }
+      if (path === '/api/community/avatar') {
+        try {
+          const image = await readAvatarUpload(req);
+          await saveAvatar(member.id, image);
+          redirect(res, '/community/profil?foto=tersimpan');
+        } catch (error) {
+          if (!(error instanceof AvatarUploadError)) throw error;
+          res.writeHead(error.status, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(memberProfile(member, error.message));
+        }
+        return;
+      }
       const form = await readBody(req);
       if (path === '/api/community/profil') {
         if (!['PMI', 'PURNA_PMI', 'KELUARGA_PMI'].includes(form.get('category'))) { res.writeHead(400); res.end(); return; }

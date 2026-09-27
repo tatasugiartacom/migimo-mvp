@@ -132,3 +132,18 @@ body{color:var(--ink)}
 .reply small{margin-left:10px;color:#65756a}.reply p{margin:8px 0;overflow-wrap:anywhere}
 .replies form{margin-top:24px}.replies textarea{min-height:90px;padding:12px}
 @media(max-width:640px){.member-page .topnav{display:none}.member-page .post-actions{justify-content:space-between;gap:5px}.member-page .post-actions a,.member-page .text-action{font-size:12px}.profile-card,.replies{padding:18px}.member-page .composer textarea{font-size:13px}}
+
+/* Optional member photos reuse the existing circular avatar without shifting layout. */
+.member-page .avatar{overflow:hidden}
+.member-page .avatar img{display:block;width:100%;height:100%;object-fit:cover}
+.profile-photo{display:flex;align-items:center;gap:19px;padding-bottom:25px;margin-bottom:25px;border-bottom:1px solid var(--line)}
+.profile-photo .avatar-large{width:76px;height:76px;font-size:28px}
+.profile-photo strong{display:block;margin-bottom:9px}
+.profile-photo form{display:flex;flex-wrap:wrap;align-items:center;gap:10px;max-width:none}
+.profile-photo input[type=file]{font:inherit;font-size:14px;max-width:270px}
+.profile-photo input[type=file]::file-selector-button{font:inherit;font-weight:600;color:var(--green);background:white;border:1px solid #a8c2ad;border-radius:9px;padding:8px 10px;margin-right:10px;cursor:pointer}
+.profile-photo small{display:block;margin-top:8px;color:#64766a}
+.avatar-feedback{color:var(--green);font-size:14px}
+.reply-author{display:flex;align-items:center;gap:10px}
+.reply-author small{display:block;margin-left:0}
+@media(max-width:640px){.profile-photo{align-items:flex-start;gap:12px}.profile-photo .avatar-large{width:62px;height:62px}.profile-photo input[type=file]{max-width:210px}}

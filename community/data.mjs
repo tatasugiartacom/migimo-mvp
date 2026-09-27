@@ -9,7 +9,8 @@ function db() {
 
 export async function findMember(googleSub) {
   const { rows } = await db().query(`
-    SELECT m.id, m.full_name_ktp AS name, p.member_category AS category
+    SELECT m.id, m.full_name_ktp AS name, p.member_category AS category,
+           EXISTS(SELECT 1 FROM community_avatars a WHERE a.member_id = m.id) AS has_avatar
     FROM migimo_google_identities g
     JOIN migimo_members m ON m.id = g.member_id
     LEFT JOIN community_profiles p ON p.member_id = m.id
@@ -19,7 +20,8 @@ export async function findMember(googleSub) {
 
 export async function memberById(id) {
   const { rows } = await db().query(`
-    SELECT m.id, m.full_name_ktp AS name, p.member_category AS category
+    SELECT m.id, m.full_name_ktp AS name, p.member_category AS category,
+           EXISTS(SELECT 1 FROM community_avatars a WHERE a.member_id = m.id) AS has_avatar
     FROM migimo_members m LEFT JOIN community_profiles p ON p.member_id = m.id
     WHERE m.id = $1`, [id]);
   return rows[0] ?? null;
@@ -38,7 +40,7 @@ export async function registerMember({ sub, email, name }) {
     await client.query('INSERT INTO migimo_google_identities (google_sub, member_id, email, email_verified) VALUES ($1, $2, $3, true)', [sub, created.rows[0].id, email]);
     await client.query('INSERT INTO community_profiles (member_id) VALUES ($1)', [created.rows[0].id]);
     await client.query('COMMIT');
-    return { id: created.rows[0].id, name, category: null };
+    return { id: created.rows[0].id, name, category: null, has_avatar: false };
   } catch (error) {
     await client.query('ROLLBACK');
     if (error.code === '23505') return findMember(sub);
@@ -54,10 +56,23 @@ export async function updateCategory(memberId, category) {
   return rowCount === 1;
 }
 
+export async function saveAvatar(memberId, image) {
+  await db().query(`
+    INSERT INTO community_avatars (member_id, image_data) VALUES ($1, $2)
+    ON CONFLICT (member_id) DO UPDATE SET image_data = EXCLUDED.image_data, updated_at = now()`,
+    [memberId, image]);
+}
+
+export async function getAvatar(memberId) {
+  const { rows } = await db().query('SELECT image_data FROM community_avatars WHERE member_id = $1', [memberId]);
+  return rows[0]?.image_data ?? null;
+}
+
 export async function listPosts(category = null, memberId) {
   const { rows } = await db().query(`
-    SELECT p.id, p.body, p.created_at, m.full_name_ktp AS author_name,
+    SELECT p.id, p.body, p.created_at, m.full_name_ktp AS author_name, p.author_id,
            c.member_category AS author_category,
+           EXISTS(SELECT 1 FROM community_avatars a WHERE a.member_id = p.author_id) AS author_has_avatar,
            (SELECT count(*)::int FROM community_comments x WHERE x.post_id = p.id AND x.deleted_at IS NULL) AS comments,
            (SELECT count(*)::int FROM community_reactions x WHERE x.post_id = p.id) AS reactions,
            EXISTS(SELECT 1 FROM community_reactions x WHERE x.post_id = p.id AND x.member_id = $2) AS liked
@@ -75,8 +90,9 @@ export async function createPost(memberId, body) {
 
 export async function getPost(id, memberId) {
   const { rows } = await db().query(`
-    SELECT p.id, p.body, p.created_at, m.full_name_ktp AS author_name,
+    SELECT p.id, p.body, p.created_at, m.full_name_ktp AS author_name, p.author_id,
            c.member_category AS author_category,
+           EXISTS(SELECT 1 FROM community_avatars a WHERE a.member_id = p.author_id) AS author_has_avatar,
            (SELECT count(*)::int FROM community_comments x WHERE x.post_id = p.id AND x.deleted_at IS NULL) AS comments,
            (SELECT count(*)::int FROM community_reactions x WHERE x.post_id = p.id) AS reactions,
            EXISTS(SELECT 1 FROM community_reactions x WHERE x.post_id = p.id AND x.member_id = $2) AS liked
@@ -88,7 +104,8 @@ export async function getPost(id, memberId) {
 
 export async function listComments(postId) {
   const { rows } = await db().query(`
-    SELECT c.body, c.created_at, m.full_name_ktp AS author_name
+    SELECT c.body, c.created_at, m.full_name_ktp AS author_name, c.author_id,
+           EXISTS(SELECT 1 FROM community_avatars a WHERE a.member_id = c.author_id) AS author_has_avatar
     FROM community_comments c JOIN migimo_members m ON m.id = c.author_id
     WHERE c.post_id = $1 AND c.deleted_at IS NULL
     ORDER BY c.created_at ASC LIMIT 100`, [postId]);
