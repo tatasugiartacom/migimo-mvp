@@ -30,6 +30,7 @@ test('member views escape names and posts while keeping approved layout', () => 
   assert.match(home, /&lt;img/);
   assert.doesNotMatch(home, /<script>|<img src=x/);
   assert.match(home, /action="\/api\/community\/posts"/);
+  assert.match(home, /<nav class="mobile-nav"[^>]*>.*<form action="\/auth\/logout" method="post"><button type="submit">.*Keluar<\/button><\/form><\/nav>/s);
   assert.match(memberProfile(member), /Purna PMI/);
   assert.match(memberProfile(member), /enctype="multipart\/form-data"/);
   assert.match(memberProfile({ ...member, id: '96061316-6a30-46b5-baf6-dad440d68f98', has_avatar: true }), /\/community\/avatar\/96061316-6a30-46b5-baf6-dad440d68f98/);
