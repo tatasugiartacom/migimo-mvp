@@ -120,6 +120,9 @@ body{color:var(--ink)}
 .member-page .post-actions a,.member-page .text-action{display:inline-flex;align-items:center;gap:7px;padding:2px 0;border:0;background:transparent;color:#526781;text-decoration:none;font:inherit;cursor:pointer}
 .member-page .post-actions a:hover,.member-page .text-action:hover,.member-page .liked{color:var(--green)}
 .member-page .mobile-nav a{display:grid;place-items:center;gap:2px;text-decoration:none;font-size:11px;color:#66796b}
+.member-page .mobile-nav form{margin:0}
+.member-page .mobile-nav button{display:grid;place-items:center;gap:2px;min-width:44px;padding:0;border:0;background:transparent;color:#66796b;font:inherit;font-size:11px;cursor:pointer}
+.member-page .mobile-nav button:hover,.member-page .mobile-nav button:focus-visible{color:var(--green)}
 .member-page .mobile-nav .selected{color:var(--green);font-weight:700}
 .empty-feed{color:#64766a;padding:24px 0}
 .profile-card,.replies{border:1px solid var(--line);border-radius:18px;padding:26px;background:#fff;box-shadow:0 5px 22px #18341b09}
