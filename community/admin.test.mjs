@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { createServer } from 'node:http';
 import { isAdmin } from './admin-access.mjs';
-import { adminDashboard } from './admin-view.mjs';
+import { adminDashboard, adminLogin } from './admin-view.mjs';
 import { memberHome, memberDiscussion } from './member-view.mjs';
 import { handler } from './server.mjs';
 
@@ -40,6 +40,7 @@ test('admin views escape member and reported content; members can open a report 
 });
 
 test('unauthenticated admin actions stay closed', async () => {
+  assert.doesNotMatch(adminLogin(), /<nav class="admin-nav"|action="\/auth\/logout"/);
   const server = createServer(handler);
   await new Promise(resolve => server.listen(0, resolve));
   const base = `http://127.0.0.1:${server.address().port}`;
