@@ -6,6 +6,7 @@ import { createDb, migrate, type Db } from "../src/db.ts";
 import { migrateAuth } from "../src/auth.ts";
 import { setupSimulator } from "../src/sim-setup.ts";
 import { UAT_CASES } from "../src/uat.ts";
+import { migrateWa } from "../src/wa/db.ts";
 
 const DB_URL = process.env.TEST_DATABASE_URL ?? "postgresql://postgres@127.0.0.1:54329/migimo_test";
 const PORT = 41000 + Math.floor(Math.random() * 1000);
@@ -23,9 +24,10 @@ const api = (path: string, body?: unknown) =>
 
 before(async () => {
   db = createDb(DB_URL);
-  await db.query("DROP TABLE IF EXISTS mti_logs, uat_results, orders, admin_audit CASCADE; DROP SEQUENCE IF EXISTS mti_external_id_seq, mti_partner_ref_seq");
+  await db.query("DROP TABLE IF EXISTS wa_transfers, wa_messages, wa_contacts, mti_logs, uat_results, orders, admin_audit CASCADE; DROP SEQUENCE IF EXISTS mti_external_id_seq, mti_partner_ref_seq");
   await migrate(db);
   await migrateAuth(db);
+  await migrateWa(db);
   const cfg = loadConfig({ MTI_MODE: "simulator", ADMIN_TOKEN: ADMIN, DATABASE_URL: DB_URL, MTI_TIMEOUT_MS: "1000" } as any);
   const sim = setupSimulator(cfg, PORT);
   const { app, uat } = buildApp({ cfg, db, sim, logger: false });

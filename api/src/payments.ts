@@ -38,6 +38,20 @@ export interface Overrides {
 }
 
 export class Payments {
+  /** Dipanggil sekali saat pesanan berubah menjadi dibayar (lewat notify atau inquiry). */
+  onPaid?: (order: Order) => Promise<void> | void;
+
+  /** Tandai dibayar hanya sekali (aman bila notify dan inquiry datang bersamaan), lalu panggil onPaid. */
+  private async markPaid(orderId: number, approvalCode: string | null, notifyPayload?: unknown) {
+    const { rows } = await this.db.query<Order>(
+      `UPDATE orders SET status = 'paid', paid_at = now(), approval_code = $2,
+         notify_payload = COALESCE($3::jsonb, notify_payload), updated_at = now()
+       WHERE id = $1 AND status NOT IN ('paid', 'refunded') RETURNING *`,
+      [orderId, approvalCode, notifyPayload === undefined ? null : JSON.stringify(notifyPayload)],
+    );
+    if (rows[0] && this.onPaid) await Promise.resolve(this.onPaid(rows[0])).catch((e) => console.error("onPaid gagal", e));
+  }
+
   constructor(
     private db: Db,
     private mti: MtiClient,
@@ -128,11 +142,7 @@ export class Payments {
     };
     const result = await this.mti.call("query", body, { scenario: p.scenario, orderId, externalId: o.externalId });
     if (result.ok && result.body?.latestTransactionStatus === "00" && order.status !== "paid" && order.status !== "refunded") {
-      await this.setStatus(orderId, {
-        status: "paid",
-        paid_at: new Date(),
-        approval_code: result.body?.additionalInfo?.approvalCode ?? order.approval_code,
-      });
+      await this.markPaid(orderId, result.body?.additionalInfo?.approvalCode ?? order.approval_code);
     }
     return { order: (await this.getOrder(orderId))!, result };
   }
@@ -188,12 +198,7 @@ export class Payments {
     }
 
     if (status === "00") {
-      await this.setStatus(order.id, {
-        status: "paid",
-        paid_at: new Date(),
-        approval_code: payload?.additionalInfo?.approvalCode ?? null,
-        notify_payload: JSON.stringify(payload),
-      });
+      await this.markPaid(order.id, payload?.additionalInfo?.approvalCode ?? null, payload);
     } else {
       await this.setStatus(order.id, {
         status: ["06", "05", "07"].includes(status) ? "failed" : order.status,

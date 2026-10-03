@@ -10,8 +10,11 @@ import { authRoutes } from "./routes/auth.js";
 import { uatRoutes } from "./routes/uat.js";
 import type { MtiSimulator } from "./mti/simulator.js";
 import { UatRunner } from "./uat.js";
+import { WaAgent } from "./wa/agent.js";
+import { WhatsAppCloud } from "./wa/cloud.js";
+import { whatsappRoutes } from "./routes/whatsapp.js";
 
-export function buildApp(deps: { cfg: Config; db: Db; fetchImpl?: typeof fetch; logger?: boolean; sim?: MtiSimulator | null }) {
+export function buildApp(deps: { cfg: Config; db: Db; fetchImpl?: typeof fetch; waFetch?: typeof fetch; aiFetch?: typeof fetch; logger?: boolean; sim?: MtiSimulator | null }) {
   const { cfg, db } = deps;
   const app = Fastify({ logger: deps.logger ?? true, bodyLimit: 1024 * 1024, trustProxy: true });
 
@@ -38,5 +41,10 @@ export function buildApp(deps: { cfg: Config; db: Db; fetchImpl?: typeof fetch; 
   uatRoutes(app, { cfg, db, payments, uat, sim: deps.sim ?? null });
   deps.sim?.register(app);
 
-  return { app, mti, payments, uat };
+  const cloud = new WhatsAppCloud(cfg.wa, deps.waFetch);
+  const agent = new WaAgent(cfg, db, payments, deps.aiFetch);
+  const wa = whatsappRoutes(app, { cfg, db, agent, cloud });
+  payments.onPaid = (order) => agent.onPaid(order, wa.kirimTeks);
+
+  return { app, mti, payments, uat, agent };
 }

@@ -36,6 +36,24 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
         env.SESSION_SECRET ??
         (env.ADMIN_TOKEN ? createHmac("sha256", env.ADMIN_TOKEN).update("migimo-session-v1").digest("hex") : ""),
     },
+    wa: {
+      phoneNumberId: env.WA_PHONE_NUMBER_ID ?? "",
+      accessToken: env.WA_ACCESS_TOKEN ?? "",
+      /** App Secret aplikasi Meta untuk memverifikasi webhook. */
+      appSecret: env.WA_APP_SECRET ?? "",
+      /** Token bebas yang juga diisikan di pengaturan webhook Meta. */
+      verifyToken: env.WA_VERIFY_TOKEN ?? "",
+      graphBaseUrl: (env.WA_GRAPH_BASE_URL ?? "https://graph.facebook.com").replace(/\/$/, ""),
+      graphVersion: env.WA_GRAPH_VERSION ?? "v23.0",
+      /** Batas nominal QRIS per transaksi (rupiah). */
+      maxRupiah: Number(env.WA_MAX_RUPIAH ?? 10_000_000),
+    },
+    ai: {
+      anthropicApiKey: env.ANTHROPIC_API_KEY ?? "",
+      model: env.ANTHROPIC_MODEL ?? "claude-sonnet-5-5",
+      /** Jumlah pesan terakhir yang diingat per percakapan. */
+      historyLimit: Number(env.WA_HISTORY_LIMIT ?? 30),
+    },
     mti: {
       mode,
       baseUrl: (env.MTI_BASE_URL ?? "").replace(/\/$/, ""),

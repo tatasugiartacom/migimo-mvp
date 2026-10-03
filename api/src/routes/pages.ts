@@ -73,6 +73,11 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
 .qr{display:block;width:240px;height:240px;margin:8px 0;image-rendering:pixelated;border:1px solid var(--garis);border-radius:10px}
 .sum{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 [hidden]{display:none!important}
+.chat{display:flex;flex-direction:column;gap:8px;max-height:460px;overflow-y:auto;padding:4px 2px}
+.bub{max-width:80%;padding:8px 12px;border-radius:14px;white-space:pre-wrap;word-break:break-word;font-size:14px}
+.bub.u{align-self:flex-end;background:#DCF8C6}.bub.a{align-self:flex-start;background:var(--panel)}.bub.t{align-self:flex-start;background:#E0E7FF}
+.bub.s{align-self:center;background:none;color:var(--abu);font-size:12px;padding:2px}
+.bub img{display:block;width:220px;max-width:100%;border-radius:8px;margin-bottom:6px;background:#fff}
 </style></head><body>
 <section id="login" class="card" hidden>
   <h2>Dashboard Migimo · Raksa</h2>
@@ -97,6 +102,7 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
     <button role="tab" data-tab="orders" aria-selected="true">Pesanan</button>
     <button role="tab" data-tab="uat" aria-selected="false">UAT (38 skenario)</button>
     <button role="tab" data-tab="logs" aria-selected="false">Log MTI</button>
+    <button role="tab" data-tab="wa" aria-selected="false">WhatsApp</button>
     <button role="tab" data-tab="audit" aria-selected="false">Aktivitas</button>
   </nav>
 </header>
@@ -127,6 +133,18 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
   <section data-panel="logs" hidden>
     <div class="card row"><label>Filter skenario<input id="logFilter" placeholder="mis. UAT-01"></label><button class="btn sec" id="refreshLogs">Muat</button></div>
     <div class="card tbl"><table><thead><tr><th>#</th><th>Waktu (WIB)</th><th>Arah</th><th>API</th><th>HTTP</th><th>Response Code</th><th>Skenario</th><th>Durasi</th><th></th></tr></thead><tbody id="logsBody"></tbody></table></div>
+  </section>
+  <section data-panel="wa" hidden>
+    <div class="card"><div class="sum" id="waStatus"></div><p class="muted" style="margin:0">Kiriman yang sudah dibayar perlu disalurkan manual ke penerima, lalu tandai "Sudah disalurkan" agar pengirim dikabari.</p></div>
+    <div class="card tbl"><div class="row" style="justify-content:space-between;margin-bottom:8px"><strong>Kiriman</strong><button class="btn sec sm" id="refreshWa">Muat ulang</button></div>
+      <table><thead><tr><th>#</th><th>Waktu (WIB)</th><th>Pengirim</th><th>Penerima</th><th>Diterima</th><th>Total QRIS</th><th>Status</th><th></th></tr></thead><tbody id="waTransfers"></tbody></table></div>
+    <div class="card tbl"><strong>Percakapan</strong>
+      <table><thead><tr><th>Nomor</th><th>Nama</th><th>Pesan terakhir</th><th>Kiriman</th><th>Status</th><th></th></tr></thead><tbody id="waContacts"></tbody></table></div>
+    <div class="card"><div class="row" style="justify-content:space-between"><strong>Uji coba bot</strong><button class="btn sec sm" id="ujiReset">Mulai ulang</button></div>
+      <p class="muted">Ngobrol dengan bot di sini tanpa WhatsApp. QRIS yang dibuat tercatat sebagai pesanan sungguhan (mode MTI saat ini).</p>
+      <div id="ujiLog" class="chat"></div>
+      <form id="ujiForm" class="row" style="margin-top:10px"><label style="flex:1">Pesan<input id="ujiInput" autocomplete="off" placeholder="mis. Halo, mau kirim 50.000 yen ke ibu"></label><button class="btn" type="submit">Kirim</button></form>
+    </div>
   </section>
   <section data-panel="audit" hidden>
     <div class="card row"><button class="btn sec" id="refreshAudit">Muat ulang</button><span class="muted">Siapa melakukan apa di dashboard ini.</span></div>

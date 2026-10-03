@@ -3,6 +3,7 @@ import { loadConfig } from "./config.js";
 import { migrateAuth } from "./auth.js";
 import { createDb, migrate } from "./db.js";
 import { setupSimulator } from "./sim-setup.js";
+import { migrateWa } from "./wa/db.js";
 
 async function main() {
   const cfg = loadConfig();
@@ -10,6 +11,7 @@ async function main() {
   const db = createDb(cfg.databaseUrl);
   await migrate(db);
   await migrateAuth(db);
+  await migrateWa(db);
   const sim = cfg.mti.mode === "simulator" ? setupSimulator(cfg, cfg.port) : null;
   const { app, uat } = buildApp({ cfg, db, sim });
   await uat.migrate();

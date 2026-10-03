@@ -102,6 +102,7 @@ export const DASHBOARD_JS = String.raw`
       if (t.getAttribute("data-tab") === "uat") loadUat();
       if (t.getAttribute("data-tab") === "logs") loadLogs();
       if (t.getAttribute("data-tab") === "audit") loadAudit();
+      if (t.getAttribute("data-tab") === "wa") loadWa();
     });
   });
 
@@ -246,7 +247,9 @@ export const DASHBOARD_JS = String.raw`
   var ACT = {
     "/admin/qr": "Buat QRIS", "/admin/orders/:id/inquiry": "Cek status", "/admin/orders/:id/refund": "Refund",
     "/admin/uat/run/:no": "Jalankan skenario UAT", "/admin/uat/run-all": "Jalankan semua UAT",
-    "/admin/sim/pay/:orderId": "Bayar (simulasi)", login: "Masuk", logout: "Keluar", login_ditolak: "Login ditolak"
+    "/admin/sim/pay/:orderId": "Bayar (simulasi)", "/admin/wa/transfers/:id/dikirim": "Tandai kiriman disalurkan",
+    "/admin/wa/contacts/:waId/send": "Balas WhatsApp", "/admin/wa/contacts/:waId/handoff": "Ubah status bot",
+    "/admin/wa/uji": "Uji coba bot", "/admin/wa/uji/reset": "Mulai ulang uji bot", login: "Masuk", logout: "Keluar", login_ditolak: "Login ditolak"
   };
   function loadAudit() {
     return api("/admin/audit?limit=200").then(function (rows) {
@@ -263,6 +266,117 @@ export const DASHBOARD_JS = String.raw`
     }).catch(function (e) { if (e.message !== "Unauthorized") toast(e.message); });
   }
   $("refreshAudit").addEventListener("click", loadAudit);
+
+  // ---------- WhatsApp ----------
+  var WA_ST = {
+    menunggu_bayar: ["b-info", "Menunggu bayar"], dibayar: ["b-wait", "Dibayar, perlu disalurkan"],
+    dikirim: ["b-ok", "Disalurkan"], batal: ["b-mut", "Batal"]
+  };
+  function waBadge(s) { var m = WA_ST[s] || ["b-mut", s]; return '<span class="b ' + m[0] + '">' + esc(m[1]) + "</span>"; }
+  function onOff(ok, label) { return '<span class="b ' + (ok ? "b-ok" : "b-bad") + '">' + esc(label) + ": " + (ok ? "siap" : "belum diatur") + "</span>"; }
+  function teksBlok(content) {
+    return (content || []).filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("\n");
+  }
+  function loadWa() {
+    api("/admin/wa/status").then(function (s) {
+      $("waStatus").innerHTML = onOff(s.whatsapp, "WhatsApp Cloud API") + onOff(s.webhookAman, "Webhook") + onOff(s.ai, "AI (" + s.model + ")");
+    }).catch(function () {});
+    api("/admin/wa/transfers").then(function (rows) {
+      $("waTransfers").innerHTML = rows.length ? rows.map(function (t) {
+        var p = t.penerima || {};
+        var act = t.status === "dibayar" ? '<button class="btn sm" data-salur="' + esc(t.id) + '">Sudah disalurkan</button>' : "";
+        return "<tr><td class=num>" + esc(t.id) + "</td><td class=num>" + esc(wib(t.created_at)) + "</td><td>" + esc(t.nama_pengirim || "-") +
+          '<div class="muted mono">' + esc(t.wa_id) + "</div></td><td>" + esc(p.nama) + '<div class="muted mono">' + esc(p.metode + " " + p.nomor) +
+          "</div></td><td class=num>" + esc(rupiah(t.terima_rupiah)) + '<div class="muted">' + esc(t.mata_uang + " " + Number(t.kirim).toLocaleString("id-ID")) +
+          "</div></td><td class=num>" + esc(rupiah(t.total_rupiah)) + '<div class="muted">pesanan #' + esc(t.order_id) + "</div></td><td>" + waBadge(t.status) +
+          (t.disbursed_by ? '<div class="muted">' + esc(t.disbursed_by) + "</div>" : "") + "</td><td>" + act + "</td></tr>";
+      }).join("") : '<tr><td colspan="8" class="muted">Belum ada kiriman lewat WhatsApp.</td></tr>';
+    }).catch(function (e) { if (e.message !== "Unauthorized") toast(e.message); });
+    api("/admin/wa/contacts").then(function (rows) {
+      $("waContacts").innerHTML = rows.length ? rows.map(function (c) {
+        return '<tr><td class="mono">' + esc(c.wa_id) + "</td><td>" + esc(c.name || "-") + "</td><td class=num>" + esc(wib(c.last_message_at)) +
+          "</td><td class=num>" + esc(c.kiriman) + "</td><td>" + (c.handoff ? '<span class="b b-wait">Ditangani tim</span>' : '<span class="b b-ok">Bot aktif</span>') +
+          '</td><td><button class="btn sec sm" data-chat="' + esc(c.wa_id) + '" data-handoff="' + (c.handoff ? 1 : 0) + '">Buka</button></td></tr>';
+      }).join("") : '<tr><td colspan="6" class="muted">Belum ada percakapan.</td></tr>';
+    }).catch(function () {});
+  }
+  $("refreshWa").addEventListener("click", loadWa);
+  $("waTransfers").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-salur]"); if (!b) return;
+    var id = b.getAttribute("data-salur");
+    if (!confirm("Dana kiriman #" + id + " sudah benar-benar ditransfer ke penerima? Pengirim akan dikabari lewat WhatsApp.")) return;
+    busy(b, true);
+    api("/admin/wa/transfers/" + id + "/dikirim", {}).then(function () { toast("Kiriman #" + id + " ditandai disalurkan"); loadWa(); })
+      .catch(function (er) { toast(er.message); busy(b, false); });
+  });
+
+  function bubbles(msgs) {
+    return msgs.map(function (m) {
+      var t = teksBlok(m.content);
+      if (!t) {
+        var tools = (m.content || []).filter(function (b) { return b.type === "tool_use"; }).map(function (b) { return b.name; });
+        return tools.length ? '<div class="bub s">alat: ' + esc(tools.join(", ")) + "</div>" : "";
+      }
+      var cls = m.role === "user" ? "u" : m.role === "team" ? "t" : "a";
+      return '<div class="bub ' + cls + '">' + (m.role === "team" ? "<strong>Tim:</strong> " : "") + esc(t) + "</div>";
+    }).join("");
+  }
+  var chatId = null;
+  function openChat(waId, handoff) {
+    chatId = waId;
+    api("/admin/wa/contacts/" + encodeURIComponent(waId) + "/messages").then(function (msgs) {
+      openDialog("<h3>Percakapan " + esc(waId) + "</h3>" +
+        '<div class="row" style="margin-bottom:8px"><button class="btn sec sm" id="hoBtn" data-on="' + (handoff ? 0 : 1) + '">' +
+        (handoff ? "Aktifkan bot lagi" : "Ambil alih (matikan bot)") + "</button></div>" +
+        '<div class="chat" id="chatLog">' + bubbles(msgs) + "</div>" +
+        '<form id="replyForm" class="row" style="margin-top:10px"><label style="flex:1">Balas sebagai tim<input id="replyInput" autocomplete="off" required></label><button class="btn" type="submit">Kirim</button></form>' +
+        '<p class="muted">WhatsApp hanya mengizinkan balasan bebas dalam 24 jam sejak pesan terakhir pengguna.</p>');
+      var log = $("chatLog"); log.scrollTop = log.scrollHeight;
+      $("hoBtn").addEventListener("click", function () {
+        var on = this.getAttribute("data-on") === "1";
+        api("/admin/wa/contacts/" + encodeURIComponent(chatId) + "/handoff", { on: on }).then(function () {
+          toast(on ? "Bot dimatikan untuk percakapan ini" : "Bot aktif lagi"); $("dlg").close(); loadWa();
+        }).catch(function (er) { toast(er.message); });
+      });
+      $("replyForm").addEventListener("submit", function (ev) {
+        ev.preventDefault();
+        var txt = $("replyInput").value.trim(); if (!txt) return;
+        var btn = ev.submitter; busy(btn, true);
+        api("/admin/wa/contacts/" + encodeURIComponent(chatId) + "/send", { text: txt }).then(function () {
+          $("replyInput").value = ""; return openChat(chatId, handoff);
+        }).catch(function (er) { toast(er.message); busy(btn, false); });
+      });
+    }).catch(function (e) { toast(e.message); });
+  }
+  $("waContacts").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-chat]"); if (!b) return;
+    openChat(b.getAttribute("data-chat"), b.getAttribute("data-handoff") === "1");
+  });
+
+  function ujiAdd(cls, html) {
+    var d = document.createElement("div"); d.className = "bub " + cls; d.innerHTML = html;
+    var log = $("ujiLog"); log.appendChild(d); log.scrollTop = log.scrollHeight;
+  }
+  $("ujiForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var txt = $("ujiInput").value.trim(); if (!txt) return;
+    var btn = e.submitter; busy(btn, true);
+    $("ujiInput").value = ""; ujiAdd("u", esc(txt)); ujiAdd("s", "mengetik…");
+    api("/admin/wa/uji", { pesan: txt }).then(function (r) {
+      var log = $("ujiLog"); log.removeChild(log.lastChild);
+      if (!r.keluar.length) ujiAdd("s", "(tidak ada balasan)");
+      r.keluar.forEach(function (k) {
+        if (k.type === "image") ujiAdd("a", '<img alt="QRIS" src="' + esc(k.dataUrl) + '">' + esc(k.caption || ""));
+        else ujiAdd("a", esc(k.text));
+      });
+      loadWa();
+    }).catch(function (er) { var log = $("ujiLog"); log.removeChild(log.lastChild); ujiAdd("s", esc("Gagal: " + er.message)); })
+      .then(function () { busy(btn, false); $("ujiInput").focus(); });
+  });
+  $("ujiReset").addEventListener("click", function () {
+    api("/admin/wa/uji/reset", {}).then(function () { $("ujiLog").innerHTML = ""; toast("Percakapan uji dimulai ulang"); })
+      .catch(function (er) { toast(er.message); });
+  });
 
   // ---------- Mulai ----------
   function init() {
