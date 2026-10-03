@@ -331,43 +331,71 @@ export default function Beranda() {
 
       {/* Footer */}
       <footer className="mt-10">
-        <div className={`${wadah} flex flex-wrap items-center justify-between gap-x-10 gap-y-6 pt-10 pb-8`}>
-          <a href="/" aria-label="Migimo beranda" className="flex">
-            <LogoMigimo />
-          </a>
-          <nav aria-label="Footer" className="flex flex-wrap items-center gap-x-7 gap-y-2">
-            {MENU.map(([teks, href]) => (
-              <a key={teks} href={href} className="py-2 text-[15px] font-medium text-teks no-underline hover:text-hijau">
-                {teks}
-              </a>
-            ))}
-            <a {...waProps} className="py-2 text-[15px] font-medium text-teks no-underline hover:text-hijau">
-              WhatsApp
+        <div className={`${wadah} grid grid-cols-2 gap-x-6 gap-y-10 pt-10 pb-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]`}>
+          <div className="col-span-2 flex flex-col items-start gap-5 lg:col-span-1">
+            <a href="/" aria-label="Migimo beranda" className="flex">
+              <LogoMigimo />
             </a>
-          </nav>
-          <div className="flex flex-wrap gap-2">
-            {SOSIAL.map(([nama, href, ikon]) => (
-              <a
-                key={nama}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`Migimo di ${nama}`}
-                className="flex size-11 items-center justify-center rounded-xl bg-panel text-teks hover:bg-[#E6E2D8] hover:text-hijau"
-              >
-                {ikon}
-              </a>
-            ))}
-          </div>
-        </div>
-        <div>
-          <div className={`${wadah} flex flex-col gap-1.5 pt-2 pb-10 text-center text-[13px] leading-[1.6] text-[#5C6356]`}>
-            <div className="mx-auto max-w-[860px]">
-              Migimo dikelola oleh PT Niaga Teknologi Indonesia sebagai penyedia platform. Transaksi pembayaran diproses
-              oleh [mitra pembayaran berizin Bank Indonesia]. Kurs dan bagi hasil di halaman ini adalah ilustrasi.
+            <p className="m-0 max-w-[280px] text-[15px] leading-relaxed text-[#5C6356]">
+              Kirim uang ke Indonesia lewat WhatsApp, dengan bagi hasil di setiap kiriman.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SOSIAL.map(([nama, href, ikon]) => (
+                <a
+                  key={nama}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Migimo di ${nama}`}
+                  className="flex size-11 items-center justify-center rounded-xl bg-panel text-teks hover:bg-[#E6E2D8] hover:text-hijau"
+                >
+                  {ikon}
+                </a>
+              ))}
             </div>
-            <div>© 2026 PT Niaga Teknologi Indonesia</div>
           </div>
+          <KolomFooter
+            judul="Layanan"
+            tautan={[
+              ["Kirim uang lewat WhatsApp", WA],
+              ["Kalkulator kurs", "#kirim"],
+              ["Negara asal", "#negara"],
+              ["Cara kirim", "#negara"],
+              ["Bagi hasil (Economic Sharing)", "#kirim"],
+            ]}
+          />
+          <KolomFooter
+            judul="Perusahaan"
+            tautan={[
+              ["Tentang kami", "#cerita"],
+              ["Kontak", WA],
+            ]}
+          />
+          <KolomFooter
+            judul="Bantuan"
+            tautan={[
+              ["Pusat bantuan", WA],
+              ["Pertanyaan umum (FAQ)", "#"],
+              ["Layanan pengaduan", "#"],
+              ["Tips keamanan", "#"],
+            ]}
+          />
+          <KolomFooter
+            judul="Legal"
+            tautan={[
+              ["Syarat dan ketentuan", "#"],
+              ["Kebijakan privasi", "#"],
+              ["Kebijakan APU-PPT", "#"],
+              ["Kebijakan pengaduan konsumen", "#"],
+            ]}
+          />
+        </div>
+        <div className={`${wadah} flex flex-col gap-1.5 pb-10 text-center text-[13px] leading-[1.6] text-[#5C6356]`}>
+          <div className="mx-auto max-w-[860px]">
+            Migimo dikelola oleh PT Niaga Teknologi Indonesia sebagai penyedia platform. Transaksi pembayaran diproses
+            oleh [mitra pembayaran berizin Bank Indonesia]. Kurs dan bagi hasil di halaman ini adalah ilustrasi.
+          </div>
+          <div>© 2026 PT Niaga Teknologi Indonesia</div>
         </div>
       </footer>
     </div>
@@ -398,5 +426,23 @@ function LogoMigimo({ priority = false }: { priority?: boolean }) {
       priority={priority}
       className="block h-[30px] w-auto"
     />
+  );
+}
+
+function KolomFooter({ judul, tautan }: { judul: string; tautan: [string, string][] }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="text-base font-bold text-teks">{judul}</div>
+      {tautan.map(([teks, href]) => (
+        <a
+          key={teks}
+          href={href}
+          {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+          className="text-[15px] text-[#5C6356] no-underline hover:text-hijau"
+        >
+          {teks}
+        </a>
+      ))}
+    </div>
   );
 }
