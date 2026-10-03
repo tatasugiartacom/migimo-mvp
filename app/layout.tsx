@@ -17,6 +17,8 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://migimo.id"),
+  alternates: { canonical: "/" },
   title: "Migimo - Mudah dan Untung",
   description:
     "Kirim uang ke Indonesia semudah chat. Bayar dengan QRIS Cross Border, dan separuh keuntungan kiriman kembali ke kamu.",
