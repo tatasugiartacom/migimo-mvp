@@ -5,6 +5,7 @@ import { MtiClient } from "./mti/client.js";
 import { Payments } from "./payments.js";
 import { adminRoutes } from "./routes/admin.js";
 import { notifyRoutes } from "./routes/notify.js";
+import { pageRoutes } from "./routes/pages.js";
 import { uatRoutes } from "./routes/uat.js";
 import type { MtiSimulator } from "./mti/simulator.js";
 import { UatRunner } from "./uat.js";
@@ -28,6 +29,7 @@ export function buildApp(deps: { cfg: Config; db: Db; fetchImpl?: typeof fetch; 
   const payments = new Payments(db, mti);
 
   app.get("/health", async () => ({ ok: true, mode: cfg.mti.mode }));
+  pageRoutes(app, { cfg });
   notifyRoutes(app, { cfg, mti, payments });
   adminRoutes(app, { cfg, db, payments });
   const uat = new UatRunner(cfg, db, payments, deps.sim ?? null);

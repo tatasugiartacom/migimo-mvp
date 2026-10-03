@@ -1,0 +1,141 @@
+import type { FastifyInstance } from "fastify";
+import type { Config } from "../config.js";
+import { DASHBOARD_JS } from "./dashboard-js.js";
+
+const SECURITY_HEADERS = {
+  "Cache-Control": "no-store",
+  "X-Frame-Options": "DENY",
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "no-referrer",
+  "Content-Security-Policy":
+    "default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+};
+
+const BASE_CSS = `
+:root{--hijau:#4E6B2E;--hijau-tua:#1F3315;--oranye:#F39F1E;--teks:#14200E;--panel:#F3F1EC;--abu:#5C6356;--garis:#E7E4DC;--merah:#B42318;--biru:#1D4ED8}
+*{box-sizing:border-box}
+body{margin:0;background:#FAFAF7;color:var(--teks);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif}
+a{color:var(--hijau)}
+button,input,select{font:inherit}
+`;
+
+function landingHtml(mode: string) {
+  return `<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Migimo API</title><style>${BASE_CSS}
+main{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#16A34A;margin-right:8px;vertical-align:middle}
+h1{margin:0;font-size:28px;font-weight:600;letter-spacing:-.02em}
+p{margin:0;color:var(--abu)}
+.mode{display:inline-block;padding:4px 12px;border-radius:999px;background:var(--panel);font-size:13px;font-weight:600}
+</style></head><body><main>
+<h1><span class="dot" aria-hidden="true"></span>Migimo API: aktif</h1>
+<p>Layanan pembayaran QRIS Migimo®.</p>
+<span class="mode">Mode MTI: ${mode === "live" ? "live" : "simulator"}</span>
+<p><a href="/dashboard">Dashboard admin</a></p>
+</main></body></html>`;
+}
+
+const DASHBOARD_HTML = `<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Migimo API</title><style>${BASE_CSS}
+header{background:#fff;border-bottom:1px solid var(--garis);position:sticky;top:0;z-index:5}
+.bar{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.bar h1{font-size:17px;margin:0;font-weight:600;margin-right:auto}
+.pill{padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--panel)}
+.pill.live{background:#FEF3C7;color:#92400E}.pill.sim{background:#DCFCE7;color:#166534}
+nav{max-width:1200px;margin:0 auto;padding:0 20px;display:flex;gap:4px;overflow-x:auto}
+nav button{border:0;background:none;padding:10px 14px;border-bottom:2px solid transparent;cursor:pointer;color:var(--abu);font-weight:500;white-space:nowrap}
+nav button[aria-selected=true]{color:var(--teks);border-color:var(--hijau)}
+main{max-width:1200px;margin:0 auto;padding:20px}
+.card{background:#fff;border:1px solid var(--garis);border-radius:14px;padding:16px;margin-bottom:16px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:end}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--abu);font-weight:500}
+input,select{border:1px solid var(--garis);border-radius:10px;padding:9px 12px;min-width:0;background:#fff;color:var(--teks)}
+.btn{border:0;border-radius:999px;padding:9px 16px;cursor:pointer;font-weight:600;background:var(--hijau-tua);color:#fff;min-height:40px}
+.btn.sec{background:var(--panel);color:var(--teks)}
+.btn.sm{padding:6px 12px;min-height:32px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:wait}
+.tbl{width:100%;overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--garis);vertical-align:top}
+th{font-size:12px;color:var(--abu);font-weight:600;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+.b{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+.b-ok{background:#DCFCE7;color:#166534}.b-bad{background:#FEE2E2;color:#991B1B}.b-wait{background:#FEF3C7;color:#92400E}.b-info{background:#E0E7FF;color:#3730A3}.b-mut{background:var(--panel);color:var(--abu)}
+.muted{color:var(--abu);font-size:13px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--teks);color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;max-width:90vw;display:none;z-index:20}
+#login{max-width:420px;margin:12vh auto}
+#login h2{margin:0 0 6px;font-size:20px}
+dialog{border:0;border-radius:16px;padding:0;max-width:min(760px,94vw);width:100%}
+dialog::backdrop{background:rgba(20,32,14,.45)}
+.dlg{padding:18px}.dlg h3{margin:0 0 10px}
+pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-height:280px;font-size:12px;white-space:pre-wrap;word-break:break-all}
+.qr{display:block;width:240px;height:240px;margin:8px 0;image-rendering:pixelated;border:1px solid var(--garis);border-radius:10px}
+.sum{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+[hidden]{display:none!important}
+</style></head><body>
+<section id="login" class="card" hidden>
+  <h2>Dashboard Migimo API</h2>
+  <p class="muted">Masukkan ADMIN_TOKEN (ada di Railway → migimo-api → Variables). Token hanya disimpan di tab ini.</p>
+  <form id="loginForm" class="row" style="margin-top:12px">
+    <label style="flex:1">ADMIN_TOKEN<input id="tokenInput" type="password" autocomplete="off" required></label>
+    <button class="btn" type="submit">Masuk</button>
+  </form>
+  <p id="loginErr" class="muted" style="color:var(--merah)"></p>
+</section>
+<div id="app" hidden>
+<header>
+  <div class="bar"><h1>Migimo API · Dashboard</h1><span id="modePill" class="pill">…</span><button id="logout" class="btn sec sm">Keluar</button></div>
+  <nav role="tablist">
+    <button role="tab" data-tab="orders" aria-selected="true">Pesanan</button>
+    <button role="tab" data-tab="uat" aria-selected="false">UAT (38 skenario)</button>
+    <button role="tab" data-tab="logs" aria-selected="false">Log MTI</button>
+  </nav>
+</header>
+<main>
+  <section data-panel="orders">
+    <div class="card">
+      <form id="qrForm" class="row">
+        <label>Nominal (Rp)<input id="qrAmount" type="number" min="0" step="1" value="10000" required></label>
+        <label>Biaya (Rp, opsional)<input id="qrFee" type="number" min="0" step="1"></label>
+        <button class="btn" type="submit">Buat QRIS</button>
+        <button class="btn sec" type="button" id="refreshOrders">Muat ulang</button>
+      </form>
+    </div>
+    <div class="card tbl"><table><thead><tr><th>#</th><th>Waktu (WIB)</th><th>Nominal</th><th>Status</th><th>Reference No</th><th>Skenario</th><th>Aksi</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
+  </section>
+  <section data-panel="uat" hidden>
+    <div class="card">
+      <div class="sum" id="uatSum"></div>
+      <div class="row">
+        <button class="btn" id="runAll">Jalankan semua</button>
+        <button class="btn sec" id="dlUat">Unduh hasil (CSV)</button>
+        <button class="btn sec" id="dlLogs">Unduh log lengkap (CSV)</button>
+      </div>
+      <p class="muted" id="uatNote"></p>
+    </div>
+    <div class="card tbl"><table><thead><tr><th>No</th><th>Kelompok</th><th>Skenario</th><th>Diharapkan</th><th>Hasil</th><th>Response Code</th><th>Catatan</th><th></th></tr></thead><tbody id="uatBody"></tbody></table></div>
+  </section>
+  <section data-panel="logs" hidden>
+    <div class="card row"><label>Filter skenario<input id="logFilter" placeholder="mis. UAT-01"></label><button class="btn sec" id="refreshLogs">Muat</button></div>
+    <div class="card tbl"><table><thead><tr><th>#</th><th>Waktu (WIB)</th><th>Arah</th><th>API</th><th>HTTP</th><th>Response Code</th><th>Skenario</th><th>Durasi</th><th></th></tr></thead><tbody id="logsBody"></tbody></table></div>
+  </section>
+</main>
+</div>
+<dialog id="dlg"><div class="dlg"><div id="dlgBody"></div><div class="row" style="margin-top:12px"><button class="btn sec" id="dlgClose">Tutup</button></div></div></dialog>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="/dashboard.js"></script>
+</body></html>`;
+
+/** Halaman depan api.migimo.id dan dashboard admin (data diambil lewat /admin/* dengan ADMIN_TOKEN). */
+export function pageRoutes(app: FastifyInstance, deps: { cfg: Config }) {
+  app.get("/", async (_req, reply) => {
+    reply.headers(SECURITY_HEADERS).type("text/html; charset=utf-8").send(landingHtml(deps.cfg.mti.mode));
+  });
+  app.get("/dashboard", async (_req, reply) => {
+    reply.headers(SECURITY_HEADERS).type("text/html; charset=utf-8").send(DASHBOARD_HTML);
+  });
+  app.get("/dashboard.js", async (_req, reply) => {
+    reply.headers(SECURITY_HEADERS).type("application/javascript; charset=utf-8").send(DASHBOARD_JS);
+  });
+}
