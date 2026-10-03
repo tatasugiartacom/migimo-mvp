@@ -182,7 +182,8 @@ export function Kalkulator() {
         Lanjut di WhatsApp
       </a>
       <p className="m-0 text-center text-[13px] leading-normal text-[#5C6356]">
-        Kurs berubah sepanjang hari. Angka final tampil di chat sebelum kamu bayar.
+        Kurs dan bagi hasil bersifat ilustrasi. Kurs berubah sepanjang hari; angka final tampil di chat sebelum
+        kamu bayar.
       </p>
     </div>
   );
