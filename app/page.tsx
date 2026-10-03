@@ -331,7 +331,7 @@ export default function Beranda() {
 
       {/* Footer */}
       <footer className="mt-10">
-        <div className={`${wadah} grid grid-cols-2 gap-x-6 gap-y-10 pt-10 pb-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]`}>
+        <div className={`${wadah} grid grid-cols-2 gap-x-6 gap-y-10 pt-10 pb-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr]`}>
           <div className="col-span-2 flex flex-col items-start gap-5 lg:col-span-1">
             <a href="/" aria-label="Migimo beranda" className="flex">
               <LogoMigimo />
@@ -365,16 +365,10 @@ export default function Beranda() {
             ]}
           />
           <KolomFooter
-            judul="Perusahaan"
+            judul="Informasi"
             tautan={[
               ["Tentang kami", "#cerita"],
               ["Kontak", WA],
-            ]}
-          />
-          <KolomFooter
-            judul="Bantuan"
-            tautan={[
-              ["Pusat bantuan", WA],
               ["Pertanyaan umum (FAQ)", "#"],
               ["Layanan pengaduan", "#"],
               ["Tips keamanan", "#"],
