@@ -101,7 +101,7 @@ export default function Beranda() {
       </section>
 
       {/* Chip 6 negara */}
-      <section className={`${wadah} pb-24`}>
+      <section id="negara-asal" className={`${wadah} scroll-mt-24 pb-24`}>
         <ul className="m-0 flex list-none flex-wrap justify-center gap-3 p-0">
           {NEGARA.map((n) => (
             <li
@@ -263,7 +263,7 @@ export default function Beranda() {
         </div>
       </section>
 
-      {/* Panel 3 langkah + grid 6 negara */}
+      {/* Panel 3 langkah */}
       <section id="negara" className={`${wadah} scroll-mt-24 pb-6`}>
         <div className="flex flex-col gap-[72px] rounded-[28px] bg-panel px-12 py-[88px] max-sm:px-5 max-sm:py-16">
           <div className="flex flex-wrap items-start gap-10">
@@ -287,27 +287,13 @@ export default function Beranda() {
                   "Keluarga menerima kiriman di Indonesia. Bagi hasilmu tercatat di akun Migimo.",
                 ],
               ].map(([judul, isi], i) => (
-                <li key={judul} className="flex flex-col gap-3.5 rounded-[16px] bg-white px-9 pt-9 pb-10 max-sm:px-6">
+                <li key={judul} className="flex flex-col gap-3.5 rounded-[22px] bg-white px-9 pt-9 pb-10 max-sm:px-6">
                   <div className="text-[56px] leading-none font-semibold tracking-[-0.022em]">{i + 1}</div>
                   <div className="text-[26px] font-semibold tracking-[-0.01em]">{judul}</div>
                   <div className="text-lg leading-[1.55] text-[#5C6356]">{isi}</div>
                 </li>
               ))}
             </ol>
-          </div>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(240px,100%),1fr))] gap-4">
-            {NEGARA.map((n) => (
-              <a
-                key={n.kode}
-                href="#kirim"
-                className="box-border flex min-h-[210px] flex-col justify-between gap-5 rounded-[16px] bg-[#E6E2D8] px-[30px] py-7 text-teks no-underline transition-colors hover:bg-[#DCD7CA] hover:text-teks"
-              >
-                <span className="flex size-[60px] overflow-hidden rounded-full">
-                  <Bendera kode={n.kode} size={60} />
-                </span>
-                <span className="text-[28px] leading-[1.1] font-semibold tracking-[-0.015em]">Kirim dari {n.nama}</span>
-              </a>
-            ))}
           </div>
         </div>
       </section>
@@ -359,7 +345,7 @@ export default function Beranda() {
             tautan={[
               ["Kirim uang lewat WhatsApp", WA],
               ["Kalkulator kurs", "#kirim"],
-              ["Negara asal", "#negara"],
+              ["Negara asal", "#negara-asal"],
               ["Cara kirim", "#negara"],
               ["Bagi hasil (Economic Sharing)", "#kirim"],
             ]}
