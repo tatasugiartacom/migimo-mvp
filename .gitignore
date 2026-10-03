@@ -126,3 +126,6 @@ next-env.d.ts
 *.tsbuildinfo
 .vercel
 .env*.local
+
+# migimo-api
+api/dist
