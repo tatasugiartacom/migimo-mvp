@@ -16,7 +16,7 @@ import {
   TandaMigimo,
 } from "@/components/Ikon";
 import { Kalkulator } from "@/components/Kalkulator";
-import { NEGARA, NOMOR_WA, linkWhatsApp } from "@/lib/negara";
+import { NEGARA, linkWhatsApp } from "@/lib/negara";
 
 const WA = linkWhatsApp("Halo Migimo, saya mau kirim uang.");
 const waProps = { href: WA, target: "_blank", rel: "noopener noreferrer" } as const;
@@ -318,24 +318,27 @@ export default function Beranda() {
         </div>
       </section>
 
-      {/* Panel penutup hijau tua + footer */}
-      <footer className={`${wadah} pb-10`}>
-        <div className="flex flex-col gap-14 overflow-hidden rounded-[40px] bg-hijau-tua px-12 pt-24 pb-12 text-white max-sm:px-6 max-sm:pt-16">
-          <div className="flex flex-col items-center gap-10 text-center">
-            <div className="font-caveat text-[clamp(44px,6.4vw,92px)] leading-[1.1] font-bold">
-              Berangkat Migran,
-              <br />
-              Pulang Juragan.
-            </div>
-            <a
-              {...waProps}
-              className="rounded-full bg-oranye px-8 py-[18px] text-lg font-extrabold text-teks no-underline hover:bg-[#E89214] hover:text-teks"
-            >
-              Mulai kirim
-            </a>
+      {/* Panel penutup putih */}
+      <section className={`${wadah} pb-6`}>
+        <div className="flex flex-col items-center gap-10 rounded-[40px] border border-garis bg-white px-12 py-24 text-center max-sm:px-6 max-sm:py-16">
+          <div className="font-caveat text-[clamp(44px,6.4vw,92px)] leading-[1.1] font-bold text-hijau-tua">
+            Berangkat Migran,
+            <br />
+            Pulang Juragan.
           </div>
+          <a
+            {...waProps}
+            className="rounded-full bg-oranye px-8 py-[18px] text-lg font-extrabold text-teks no-underline hover:bg-[#E89214] hover:text-teks"
+          >
+            Mulai kirim
+          </a>
+        </div>
+      </section>
 
-          <div className="flex flex-wrap gap-10 border-t border-[#3F5531] pt-12">
+      {/* Footer */}
+      <footer className={`${wadah} pb-10`}>
+        <div className="flex flex-col gap-14 overflow-hidden rounded-[40px] bg-hijau-tua px-12 pt-16 pb-12 text-white max-sm:px-6">
+          <div className="flex flex-wrap gap-10">
             <div className="flex grow shrink basis-[260px] flex-col items-start gap-5">
               <a href="/" aria-label="Migimo beranda" className="flex rounded-xl bg-white px-4 py-3">
                 <LogoMigimo />
@@ -343,13 +346,6 @@ export default function Beranda() {
               <p className="m-0 max-w-[300px] text-[15px] leading-relaxed text-[#C9D6BC]">
                 Kirim uang ke Indonesia lewat WhatsApp, dengan bagi hasil di setiap kiriman.
               </p>
-              <div className="flex flex-col gap-2 text-[15px] text-[#C9D6BC]">
-                <a {...waProps} className="text-[#C9D6BC] no-underline hover:text-white">
-                  WhatsApp: {formatNomor(NOMOR_WA)}
-                </a>
-                <span>Email: [EMAIL_LAYANAN_PELANGGAN]</span>
-                <span>Jam layanan: [JAM_LAYANAN]</span>
-              </div>
               <div className="flex flex-wrap gap-2.5">
                 {SOSIAL.map(([nama, href, ikon]) => (
                   <a
@@ -404,23 +400,7 @@ export default function Beranda() {
             </div>
           </div>
 
-          <div className="grid gap-6 border-t border-[#3F5531] pt-10 text-[13px] leading-[1.6] text-[#A9B99B] md:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <div className="text-sm font-bold text-white">Layanan pengaduan konsumen</div>
-              <div>PT Niaga Teknologi Indonesia</div>
-              <div>[ALAMAT_KANTOR]</div>
-              <div>Email: [EMAIL_PENGADUAN] · WhatsApp: {formatNomor(NOMOR_WA)}</div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <div className="text-sm font-bold text-white">Keamanan akun</div>
-              <div>
-                Migimo tidak pernah meminta PIN, OTP, atau kata sandi kamu. Pastikan kamu hanya bertransaksi lewat nomor
-                WhatsApp resmi Migimo yang tercantum di halaman ini.
-              </div>
-            </div>
-          </div>
-
-          <div className="mx-auto flex max-w-[860px] flex-col gap-1.5 text-center text-[13px] leading-[1.6] text-[#A9B99B]">
+          <div className="mx-auto flex max-w-[860px] flex-col border-t border-[#3F5531] pt-10 gap-1.5 text-center text-[13px] leading-[1.6] text-[#A9B99B]">
             <div>
               Migimo dikelola oleh PT Niaga Teknologi Indonesia sebagai penyedia platform. Transaksi pembayaran diproses
               oleh [mitra pembayaran berizin Bank Indonesia]. Kurs dan bagi hasil di halaman ini adalah ilustrasi.
@@ -440,12 +420,6 @@ const SOSIAL: [string, string, React.ReactNode][] = [
   ["X", "https://x.com/Migimoid", <IkonX key="x" />],
   ["YouTube", "https://www.youtube.com/@MigimoID", <IkonYouTube key="yt" />],
 ];
-
-function formatNomor(n: string) {
-  // 6281284323000 -> +62 812-8432-3000
-  const lokal = n.replace(/^62/, "");
-  return `+62 ${lokal.slice(0, 3)}-${lokal.slice(3, 7)}-${lokal.slice(7)}`;
-}
 
 function LogoMigimo({ priority = false }: { priority?: boolean }) {
   return (
