@@ -25,7 +25,7 @@ export const DASHBOARD_JS = String.raw`
   }
 
   function api(path, body) {
-    var opt = { method: body === undefined ? "GET" : "POST", headers: { Authorization: "Bearer " + token } };
+    var opt = { method: body === undefined ? "GET" : "POST", headers: authHeaders(), credentials: "same-origin" };
     if (body !== undefined) { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
     return fetch(path, opt).then(function (r) {
       if (r.status === 401) { logout("Token salah atau kedaluwarsa."); throw new Error("Unauthorized"); }
@@ -37,8 +37,13 @@ export const DASHBOARD_JS = String.raw`
       });
     });
   }
+  function authHeaders() {
+    var h = { "X-Migimo-Dashboard": "1" };
+    if (token) h.Authorization = "Bearer " + token;
+    return h;
+  }
   function download(path, name) {
-    fetch(path, { headers: { Authorization: "Bearer " + token } })
+    fetch(path, { headers: authHeaders(), credentials: "same-origin" })
       .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.blob(); })
       .then(function (b) {
         var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name;
@@ -60,20 +65,32 @@ export const DASHBOARD_JS = String.raw`
   function busy(btn, on) { if (btn) { btn.disabled = on; } }
 
   // ---------- Login ----------
-  function showApp() { $("login").hidden = true; $("app").hidden = false; init(); }
+  var googleOn = false;
+  function showApp(who) { $("login").hidden = true; $("app").hidden = false; $("whoami").textContent = who || ""; init(); }
   function logout(msg) {
     token = ""; try { sessionStorage.removeItem(KEY); } catch (e) {}
     $("app").hidden = true; $("login").hidden = false; $("loginErr").textContent = msg || "";
+    $("googleBtn").hidden = !googleOn;
   }
   $("loginForm").addEventListener("submit", function (e) {
     e.preventDefault();
     token = $("tokenInput").value.trim();
     api("/admin/orders?limit=1").then(function () {
       try { sessionStorage.setItem(KEY, token); } catch (e2) {}
-      $("tokenInput").value = ""; showApp();
+      $("tokenInput").value = ""; showApp("ADMIN_TOKEN");
     }).catch(function (err) { if (err.message !== "Unauthorized") $("loginErr").textContent = err.message; });
   });
-  $("logout").addEventListener("click", function () { logout(); });
+  $("logout").addEventListener("click", function () {
+    fetch("/auth/logout", { method: "POST", headers: { "X-Migimo-Dashboard": "1" }, credentials: "same-origin" })
+      .catch(function () {}).then(function () { logout("Anda sudah keluar."); });
+  });
+  var LOGIN_MSG = {
+    ditolak: "Email ini belum terdaftar sebagai admin Migimo.",
+    gagal: "Login Google gagal. Coba lagi.",
+    dibatalkan: "Login dibatalkan.",
+    sesi_kedaluwarsa: "Sesi login kedaluwarsa. Coba lagi.",
+    belum_dikonfigurasi: "Login Google belum dikonfigurasi."
+  };
 
   // ---------- Tab ----------
   var tabs = document.querySelectorAll("[role=tab]");
@@ -84,6 +101,7 @@ export const DASHBOARD_JS = String.raw`
       if (t.getAttribute("data-tab") === "orders") loadOrders();
       if (t.getAttribute("data-tab") === "uat") loadUat();
       if (t.getAttribute("data-tab") === "logs") loadLogs();
+      if (t.getAttribute("data-tab") === "audit") loadAudit();
     });
   });
 
@@ -137,7 +155,7 @@ export const DASHBOARD_JS = String.raw`
         "</table>" + (o.qr_content ? '<img class="qr" id="qrImg" alt="QRIS pesanan ' + esc(o.id) + '"><pre>' + esc(o.qr_content) + "</pre>" : "");
       openDialog(html);
       if (o.qr_content) {
-        fetch("/admin/orders/" + id + "/qr.png", { headers: { Authorization: "Bearer " + token } })
+        fetch("/admin/orders/" + id + "/qr.png", { headers: authHeaders(), credentials: "same-origin" })
           .then(function (r) { return r.blob(); }).then(function (bl) { var img = $("qrImg"); if (img) img.src = URL.createObjectURL(bl); });
       }
     }).catch(function (e) { toast(e.message); });
@@ -224,6 +242,28 @@ export const DASHBOARD_JS = String.raw`
   });
   $("refreshLogs").addEventListener("click", loadLogs);
 
+  // ---------- Aktivitas ----------
+  var ACT = {
+    "/admin/qr": "Buat QRIS", "/admin/orders/:id/inquiry": "Cek status", "/admin/orders/:id/refund": "Refund",
+    "/admin/uat/run/:no": "Jalankan skenario UAT", "/admin/uat/run-all": "Jalankan semua UAT",
+    "/admin/sim/pay/:orderId": "Bayar (simulasi)", login: "Masuk", logout: "Keluar", login_ditolak: "Login ditolak"
+  };
+  function loadAudit() {
+    return api("/admin/audit?limit=200").then(function (rows) {
+      $("auditBody").innerHTML = rows.length ? rows.map(function (a) {
+        var d = a.detail || {};
+        var info = [];
+        if (d.params && Object.keys(d.params).length) info.push(JSON.stringify(d.params));
+        if (d.body && d.body.amount != null) info.push("nominal " + rupiah(d.body.amount));
+        if (d.status) info.push("HTTP " + d.status);
+        if (d.alasan) info.push(d.alasan);
+        return "<tr><td class=num>" + esc(a.id) + "</td><td class=num>" + esc(wib(a.at)) + "</td><td>" + esc(a.actor) +
+          "</td><td>" + esc(ACT[a.action] || a.action) + '</td><td class="muted">' + esc(info.join(" · ")) + "</td></tr>";
+      }).join("") : '<tr><td colspan="5" class="muted">Belum ada aktivitas.</td></tr>';
+    }).catch(function (e) { if (e.message !== "Unauthorized") toast(e.message); });
+  }
+  $("refreshAudit").addEventListener("click", loadAudit);
+
   // ---------- Mulai ----------
   function init() {
     fetch("/health").then(function (r) { return r.json(); }).then(function (h) {
@@ -232,6 +272,16 @@ export const DASHBOARD_JS = String.raw`
       loadOrders();
     });
   }
-  if (token) showApp(); else logout();
+  var qs = new URLSearchParams(location.search);
+  var loginMsg = LOGIN_MSG[qs.get("login")] || "";
+  if (qs.has("login")) history.replaceState(null, "", location.pathname);
+  fetch("/auth/me", { credentials: "same-origin" }).then(function (r) {
+    return r.json().then(function (d) { return { ok: r.ok, d: d }; });
+  }).then(function (res) {
+    googleOn = !!res.d.google;
+    if (res.ok) return showApp(res.d.email);
+    if (token) return showApp("ADMIN_TOKEN");
+    logout(loginMsg);
+  }).catch(function () { if (token) showApp("ADMIN_TOKEN"); else logout(loginMsg); });
 })();
 `;

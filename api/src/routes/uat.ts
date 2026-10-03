@@ -1,29 +1,28 @@
-import { timingSafeEqual } from "node:crypto";
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import type { FastifyInstance } from "fastify";
+import { audit, requireAdmin } from "../auth.js";
+import type { Db } from "../db.js";
 import type { Config } from "../config.js";
 import type { MtiSimulator } from "../mti/simulator.js";
 import type { Payments } from "../payments.js";
 import { UAT_CASES, type UatRunner } from "../uat.js";
 import { csv } from "./admin.js";
 
-/** Menjalankan dan mengekspor skenario UAT (header Authorization: Bearer ADMIN_TOKEN). */
+/** Menjalankan dan mengekspor skenario UAT (login Google atau header Authorization: Bearer ADMIN_TOKEN). */
 export function uatRoutes(
   app: FastifyInstance,
-  deps: { cfg: Config; payments: Payments; uat: UatRunner; sim: MtiSimulator | null },
+  deps: { cfg: Config; db: Db; payments: Payments; uat: UatRunner; sim: MtiSimulator | null },
 ) {
-  const { cfg, payments, uat, sim } = deps;
-
-  const guard = async (req: FastifyRequest) => {
-    if (!cfg.adminToken) throw Object.assign(new Error("ADMIN_TOKEN belum diatur"), { statusCode: 503 });
-    const given = Buffer.from(String(req.headers.authorization ?? "").replace(/^Bearer\s+/i, ""));
-    const want = Buffer.from(cfg.adminToken);
-    if (given.length !== want.length || !timingSafeEqual(given, want)) {
-      throw Object.assign(new Error("Unauthorized"), { statusCode: 401 });
-    }
-  };
+  const { cfg, db, payments, uat, sim } = deps;
 
   app.register(async (r) => {
-    r.addHook("onRequest", guard);
+    r.addHook("onRequest", requireAdmin(cfg));
+    r.addHook("onResponse", async (req, reply) => {
+      if (req.method === "POST" && req.actor) {
+        await audit(db, req.actor, req.routeOptions.url ?? req.url, { params: req.params, status: reply.statusCode }).catch((e) =>
+          req.log.error(e, "Gagal mencatat audit"),
+        );
+      }
+    });
 
     r.get("/admin/uat/cases", async () => UAT_CASES);
 

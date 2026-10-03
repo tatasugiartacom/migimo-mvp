@@ -36,7 +36,7 @@ p{margin:0;color:var(--abu)}
 }
 
 const DASHBOARD_HTML = `<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dashboard Migimo API</title><style>${BASE_CSS}
+<title>Raksa · Dashboard Migimo</title><style>${BASE_CSS}
 header{background:#fff;border-bottom:1px solid var(--garis);position:sticky;top:0;z-index:5}
 .bar{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
 .bar h1{font-size:17px;margin:0;font-weight:600;margin-right:auto}
@@ -75,21 +75,29 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
 [hidden]{display:none!important}
 </style></head><body>
 <section id="login" class="card" hidden>
-  <h2>Dashboard Migimo API</h2>
-  <p class="muted">Masukkan ADMIN_TOKEN (ada di Railway → migimo-api → Variables). Token hanya disimpan di tab ini.</p>
-  <form id="loginForm" class="row" style="margin-top:12px">
-    <label style="flex:1">ADMIN_TOKEN<input id="tokenInput" type="password" autocomplete="off" required></label>
-    <button class="btn" type="submit">Masuk</button>
-  </form>
+  <h2>Dashboard Migimo · Raksa</h2>
+  <p class="muted">Masuk dengan akun Google yang terdaftar sebagai admin Migimo.</p>
   <p id="loginErr" class="muted" style="color:var(--merah)"></p>
+  <a id="googleBtn" class="btn" href="/auth/google" style="display:inline-flex;align-items:center;gap:10px;text-decoration:none;margin-top:6px" hidden>
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+    Masuk dengan Google
+  </a>
+  <details style="margin-top:18px">
+    <summary class="muted" style="cursor:pointer">Login teknis (ADMIN_TOKEN)</summary>
+    <form id="loginForm" class="row" style="margin-top:10px">
+      <label style="flex:1">ADMIN_TOKEN<input id="tokenInput" type="password" autocomplete="off" required></label>
+      <button class="btn sec" type="submit">Masuk</button>
+    </form>
+  </details>
 </section>
 <div id="app" hidden>
 <header>
-  <div class="bar"><h1>Migimo API · Dashboard</h1><span id="modePill" class="pill">…</span><button id="logout" class="btn sec sm">Keluar</button></div>
+  <div class="bar"><h1>Migimo · Raksa</h1><span id="modePill" class="pill">…</span><span id="whoami" class="muted"></span><button id="logout" class="btn sec sm">Keluar</button></div>
   <nav role="tablist">
     <button role="tab" data-tab="orders" aria-selected="true">Pesanan</button>
     <button role="tab" data-tab="uat" aria-selected="false">UAT (38 skenario)</button>
     <button role="tab" data-tab="logs" aria-selected="false">Log MTI</button>
+    <button role="tab" data-tab="audit" aria-selected="false">Aktivitas</button>
   </nav>
 </header>
 <main>
@@ -119,6 +127,10 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
   <section data-panel="logs" hidden>
     <div class="card row"><label>Filter skenario<input id="logFilter" placeholder="mis. UAT-01"></label><button class="btn sec" id="refreshLogs">Muat</button></div>
     <div class="card tbl"><table><thead><tr><th>#</th><th>Waktu (WIB)</th><th>Arah</th><th>API</th><th>HTTP</th><th>Response Code</th><th>Skenario</th><th>Durasi</th><th></th></tr></thead><tbody id="logsBody"></tbody></table></div>
+  </section>
+  <section data-panel="audit" hidden>
+    <div class="card row"><button class="btn sec" id="refreshAudit">Muat ulang</button><span class="muted">Siapa melakukan apa di dashboard ini.</span></div>
+    <div class="card tbl"><table><thead><tr><th>#</th><th>Waktu (WIB)</th><th>Pengguna</th><th>Aksi</th><th>Detail</th></tr></thead><tbody id="auditBody"></tbody></table></div>
   </section>
 </main>
 </div>

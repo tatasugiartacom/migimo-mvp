@@ -1,5 +1,6 @@
-import { createPublicKey, timingSafeEqual } from "node:crypto";
-import type { FastifyInstance, FastifyRequest } from "fastify";
+import { createPublicKey } from "node:crypto";
+import type { FastifyInstance } from "fastify";
+import { audit, requireAdmin } from "../auth.js";
 import QRCode from "qrcode";
 import type { Config } from "../config.js";
 import type { Db } from "../db.js";
@@ -15,21 +16,27 @@ function csv(rows: Record<string, unknown>[]) {
   return [cols.join(","), ...rows.map((r) => cols.map((c) => esc(r[c])).join(","))].join("\n");
 }
 
-/** API internal tim Migimo untuk menjalankan dan memantau transaksi UAT. Wajib header Authorization: Bearer ADMIN_TOKEN. */
+/** API internal tim Migimo untuk menjalankan dan memantau transaksi UAT. Wajib login Google (email di ADMIN_EMAILS) atau header Authorization: Bearer ADMIN_TOKEN. */
 export function adminRoutes(app: FastifyInstance, deps: { cfg: Config; db: Db; payments: Payments }) {
   const { cfg, db, payments } = deps;
 
-  const guard = async (req: FastifyRequest) => {
-    if (!cfg.adminToken) throw Object.assign(new Error("ADMIN_TOKEN belum diatur"), { statusCode: 503 });
-    const given = Buffer.from(String(req.headers.authorization ?? "").replace(/^Bearer\s+/i, ""));
-    const want = Buffer.from(cfg.adminToken);
-    if (given.length !== want.length || !timingSafeEqual(given, want)) {
-      throw Object.assign(new Error("Unauthorized"), { statusCode: 401 });
-    }
-  };
-
   app.register(async (r) => {
-    r.addHook("onRequest", guard);
+    r.addHook("onRequest", requireAdmin(cfg));
+    r.addHook("onResponse", async (req, reply) => {
+      if (req.method === "POST" && req.actor) {
+        await audit(db, req.actor, req.routeOptions.url ?? req.url, {
+          params: req.params,
+          body: req.body,
+          status: reply.statusCode,
+        }).catch((e) => req.log.error(e, "Gagal mencatat audit"));
+      }
+    });
+
+    r.get("/admin/audit", async (req) => {
+      const limit = Math.min(Number((req.query as any).limit ?? 200), 1000);
+      const { rows } = await db.query("SELECT * FROM admin_audit ORDER BY id DESC LIMIT $1", [limit]);
+      return rows;
+    });
 
     r.get("/admin/keys/public", async (_req, reply) => {
       if (!cfg.mti.privateKey) return reply.code(404).send({ error: "MTI_PRIVATE_KEY belum diatur" });

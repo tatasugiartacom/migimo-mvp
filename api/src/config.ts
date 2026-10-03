@@ -1,3 +1,5 @@
+import { createHmac } from "node:crypto";
+
 /** Semua konfigurasi dibaca dari environment variable (Railway → Variables). */
 
 function pem(v: string | undefined): string | undefined {
@@ -21,6 +23,19 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     publicBaseUrl: (env.PUBLIC_BASE_URL ?? "").replace(/\/$/, ""),
     /** Host khusus dashboard admin, mis. raksa.migimo.id. Kosong = dashboard di /dashboard pada host mana pun. */
     dashboardHost: (env.DASHBOARD_HOST ?? "").toLowerCase(),
+    auth: {
+      googleClientId: env.GOOGLE_CLIENT_ID ?? "",
+      googleClientSecret: env.GOOGLE_CLIENT_SECRET ?? "",
+      /** Email yang boleh masuk dashboard, dipisah koma. */
+      adminEmails: (env.ADMIN_EMAILS ?? "")
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean),
+      /** Kunci tanda tangan cookie sesi. Bawaan: diturunkan dari ADMIN_TOKEN. */
+      sessionSecret:
+        env.SESSION_SECRET ??
+        (env.ADMIN_TOKEN ? createHmac("sha256", env.ADMIN_TOKEN).update("migimo-session-v1").digest("hex") : ""),
+    },
     mti: {
       mode,
       baseUrl: (env.MTI_BASE_URL ?? "").replace(/\/$/, ""),
