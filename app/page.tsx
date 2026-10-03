@@ -384,8 +384,8 @@ export default function Beranda() {
             ]}
           />
         </div>
-        <div className={`${wadah} flex flex-col gap-1.5 pb-10 text-center text-[13px] leading-[1.6] text-[#5C6356]`}>
-          <div className="mx-auto max-w-[860px]">
+        <div className={`${wadah} flex flex-col gap-1 pb-10 text-center text-[13px] leading-[1.6] xl:text-[12px] text-[#5C6356]`}>
+          <div className="xl:whitespace-nowrap">
             Migimo® (Market Enabler) bersama PT Niaga Teknologi Indonesia (Technology Provider). Pembayaran diproses
             oleh [mitra pembayaran berizin Bank Indonesia]. Kurs dan bagi hasil bersifat ilustrasi.
           </div>
