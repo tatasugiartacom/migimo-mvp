@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-hijau: #4E6B2E;
+  --color-hijau-tua: #1F3315;
+  --color-oranye: #F39F1E;
+  --color-teks: #14200E;
+  --color-panel: #F3F1EC;
+  --color-abu: #4A5144;
+  --color-garis: #E7E4DC;
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    background: #FFFFFF;
+    color: var(--color-teks);
+  }
+
+  a {
+    color: var(--color-hijau);
+  }
+  a:hover {
+    color: #3A5221;
+  }
+
+  h1, h2, h3, p {
+    text-wrap: pretty;
+  }
+}
