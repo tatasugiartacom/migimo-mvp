@@ -21,7 +21,7 @@ export const NEGARA: Negara[] = [
   { kode: "CN", nama: "Tiongkok", mataUang: "CNY", simbol: "¥", kurs: 2300, nominalAwal: 2500, namaKurs: "Yuan" },
 ];
 
-export const NOMOR_WA = "[NOMOR_MIGIMO]";
+export const NOMOR_WA = "6281284323000";
 
 export function linkWhatsApp(pesan?: string) {
   const dasar = `https://wa.me/${NOMOR_WA}`;

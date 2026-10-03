@@ -10,9 +10,11 @@ npm install
 npm run dev
 ```
 
-## Deploy ke Vercel
+## Deploy ke Railway
 
-Import repo ini di Vercel; framework terdeteksi otomatis sebagai Next.js, tanpa konfigurasi tambahan.
+Buat service baru dari repo GitHub ini di Railway. Pengaturan build dan start ada di `railway.json`
+(`npm run build`, lalu `npm run start` yang mendengarkan variabel `PORT` dari Railway).
+Setelah deploy, buka Settings › Networking › Generate Domain untuk mendapatkan URL publik.
 
 ## Struktur
 
@@ -20,4 +22,4 @@ Import repo ini di Vercel; framework terdeteksi otomatis sebagai Next.js, tanpa 
 - `components/Kalkulator.tsx` — kalkulator kirim uang (client component)
 - `lib/negara.ts` — daftar negara, kurs ilustrasi, rumus biaya, dan nomor WhatsApp
 
-Placeholder dalam kurung siku (mis. `[NOMOR_MIGIMO]` di `lib/negara.ts`) perlu diganti sebelum rilis.
+Nomor WhatsApp Migimo diatur di `lib/negara.ts` (`NOMOR_WA`). Placeholder dalam kurung siku yang tersisa perlu diganti sebelum rilis.
