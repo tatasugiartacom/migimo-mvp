@@ -347,7 +347,7 @@ export default function Beranda() {
               ["Kalkulator kurs", "#kirim"],
               ["Negara asal", "#negara-asal"],
               ["Cara kirim", "#negara"],
-              ["Bagi hasil (Economic Sharing)", "#kirim"],
+              ["Bagi hasil", "#kirim"],
             ]}
           />
           <KolomFooter
