@@ -386,11 +386,10 @@ export default function Beranda() {
         </div>
         <div className={`${wadah} flex flex-col gap-1.5 pb-10 text-center text-[13px] leading-[1.6] text-[#5C6356]`}>
           <div className="mx-auto max-w-[860px]">
-            Migimo® berperan sebagai Market Enabler bagi Pekerja Migran Indonesia. PT Niaga Teknologi Indonesia berperan
-            sebagai Technology Provider. Transaksi pembayaran diproses oleh [mitra pembayaran berizin Bank Indonesia].
-            Kurs dan bagi hasil di halaman ini adalah ilustrasi.
+            Migimo® (Market Enabler) bersama PT Niaga Teknologi Indonesia (Technology Provider). Pembayaran diproses
+            oleh [mitra pembayaran berizin Bank Indonesia]. Kurs dan bagi hasil bersifat ilustrasi.
           </div>
-          <div>© 2026 Migimo®. Technology Provider: PT Niaga Teknologi Indonesia</div>
+          <div>© 2026 Migimo®</div>
         </div>
       </footer>
     </div>
