@@ -14,6 +14,7 @@ sesuai *QR Payment API Documentation v1.0.11*. Berjalan di Railway (Singapura) d
 |---|---|
 | `DATABASE_URL` | Postgres (Railway: `${{Postgres.DATABASE_URL}}`) |
 | `ADMIN_TOKEN` | Token untuk endpoint `/admin/*` |
+| `DASHBOARD_HOST` | Host dashboard admin, mis. `raksa.migimo.id` |
 | `MTI_MODE` | `simulator` atau `live` |
 | `MTI_BASE_URL` | Base URL API Yokke (live) |
 | `MTI_CLIENT_KEY` | Consumer Key dari portal Yokke (`X-CLIENT-KEY`) |
@@ -30,7 +31,7 @@ sesuai *QR Payment API Documentation v1.0.11*. Berjalan di Railway (Singapura) d
 ## Endpoint
 
 - `GET /`: halaman "Migimo API: aktif".
-- `GET /dashboard`: dashboard admin di browser (login dengan `ADMIN_TOKEN`): pesanan, QRIS, UAT, log.
+- Dashboard admin di browser (login dengan `ADMIN_TOKEN`): pesanan, QRIS, UAT, log. Tampil di `/` pada host `DASHBOARD_HOST` (https://raksa.migimo.id); `/dashboard` di host lain dialihkan ke sana.
 - `POST /qr/qr-mpm-notify`: QR Payment Credit Notify dari MTI (diverifikasi RSA).
 - `GET /health`
 - Admin (header `Authorization: Bearer <ADMIN_TOKEN>`):

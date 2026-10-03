@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import type { Config } from "../config.js";
 import { DASHBOARD_JS } from "./dashboard-js.js";
 
@@ -19,7 +19,7 @@ a{color:var(--hijau)}
 button,input,select{font:inherit}
 `;
 
-function landingHtml(mode: string) {
+function landingHtml(mode: string, dashHost: string) {
   return `<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Migimo API</title><style>${BASE_CSS}
 main{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
@@ -31,7 +31,7 @@ p{margin:0;color:var(--abu)}
 <h1><span class="dot" aria-hidden="true"></span>Migimo API: aktif</h1>
 <p>Layanan pembayaran QRIS Migimo®.</p>
 <span class="mode">Mode MTI: ${mode === "live" ? "live" : "simulator"}</span>
-<p><a href="/dashboard">Dashboard admin</a></p>
+<p><a href="${dashHost ? `https://${dashHost}/` : "/dashboard"}">Dashboard admin</a></p>
 </main></body></html>`;
 }
 
@@ -129,11 +129,19 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
 
 /** Halaman depan api.migimo.id dan dashboard admin (data diambil lewat /admin/* dengan ADMIN_TOKEN). */
 export function pageRoutes(app: FastifyInstance, deps: { cfg: Config }) {
-  app.get("/", async (_req, reply) => {
-    reply.headers(SECURITY_HEADERS).type("text/html; charset=utf-8").send(landingHtml(deps.cfg.mti.mode));
-  });
-  app.get("/dashboard", async (_req, reply) => {
+  const dashHost = deps.cfg.dashboardHost;
+  const isDashHost = (hostname: string) => !!dashHost && hostname.toLowerCase() === dashHost;
+  const sendDashboard = (reply: FastifyReply) =>
     reply.headers(SECURITY_HEADERS).type("text/html; charset=utf-8").send(DASHBOARD_HTML);
+
+  app.get("/", async (req, reply) => {
+    if (isDashHost(req.hostname)) return sendDashboard(reply);
+    reply.headers(SECURITY_HEADERS).type("text/html; charset=utf-8").send(landingHtml(deps.cfg.mti.mode, dashHost));
+  });
+  app.get("/dashboard", async (req, reply) => {
+    // Dashboard punya alamat sendiri (mis. raksa.migimo.id); alamat lama dialihkan ke sana.
+    if (dashHost && !isDashHost(req.hostname)) return reply.redirect(`https://${dashHost}/`, 301);
+    return sendDashboard(reply);
   });
   app.get("/dashboard.js", async (_req, reply) => {
     reply.headers(SECURITY_HEADERS).type("application/javascript; charset=utf-8").send(DASHBOARD_JS);

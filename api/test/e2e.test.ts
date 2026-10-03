@@ -94,3 +94,18 @@ test("38 skenario UAT terhadap simulator", async () => {
   assert.equal(csv.split("\n").length, 39);
   assert.equal(UAT_CASES.length, 38);
 });
+
+test("dashboard di host khusus, alamat lama dialihkan", async () => {
+  const { buildApp: build } = await import("../src/app.ts");
+  const cfg2 = loadConfig({ MTI_MODE: "simulator", ADMIN_TOKEN: ADMIN, DASHBOARD_HOST: "raksa.migimo.id" } as any);
+  const { app } = build({ cfg: cfg2, db, logger: false });
+  const dash = await app.inject({ method: "GET", url: "/", headers: { host: "raksa.migimo.id" } });
+  assert.match(dash.body, /Dashboard Migimo API/);
+  const land = await app.inject({ method: "GET", url: "/", headers: { host: "api.migimo.id" } });
+  assert.match(land.body, /Migimo API: aktif/);
+  assert.match(land.body, /https:\/\/raksa\.migimo\.id\//);
+  const old = await app.inject({ method: "GET", url: "/dashboard", headers: { host: "api.migimo.id" } });
+  assert.equal(old.statusCode, 301);
+  assert.equal(old.headers.location, "https://raksa.migimo.id/");
+  await app.close();
+});

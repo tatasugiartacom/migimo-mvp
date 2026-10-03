@@ -19,6 +19,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     databaseUrl: env.DATABASE_URL ?? "",
     adminToken: env.ADMIN_TOKEN ?? "",
     publicBaseUrl: (env.PUBLIC_BASE_URL ?? "").replace(/\/$/, ""),
+    /** Host khusus dashboard admin, mis. raksa.migimo.id. Kosong = dashboard di /dashboard pada host mana pun. */
+    dashboardHost: (env.DASHBOARD_HOST ?? "").toLowerCase(),
     mti: {
       mode,
       baseUrl: (env.MTI_BASE_URL ?? "").replace(/\/$/, ""),
