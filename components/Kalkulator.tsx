@@ -49,13 +49,13 @@ export function Kalkulator() {
     `Bagi hasil untuk saya: Rp${rupiah(bagiRupiah)} + ${n.simbol}${rupiah(bagiAsal)}`,
   ].join("\n");
 
-  const kotak = "rounded-[22px] border border-[#E1DED6] px-5 py-3.5 flex flex-col gap-1";
-  const label = "text-[15px] font-semibold text-abu";
+  const kotak = "rounded-[16px] border border-[#E1DED6] px-5 py-3.5 flex flex-col gap-1";
+  const label = "text-[15px] font-medium text-abu";
   const input =
-    "min-w-0 grow h-10 border-none bg-transparent font-[inherit] text-[26px] font-bold text-teks outline-none";
+    "min-w-0 grow h-10 border-none bg-transparent font-[inherit] text-[26px] font-semibold text-teks outline-none";
 
   return (
-    <div className="w-full basis-[460px] shrink grow-0 rounded-[36px] border border-garis bg-white p-7 flex flex-col gap-3.5 shadow-[0_24px_60px_rgba(20,32,14,0.08)] max-[1040px]:grow">
+    <div className="w-full min-w-0 basis-[500px] shrink grow-0 rounded-[24px] border border-garis bg-white p-7 flex flex-col gap-3.5 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.05)] max-[1040px]:grow">
       <label htmlFor="asal" className={label}>
         Negara asal
       </label>
@@ -70,7 +70,7 @@ export function Kalkulator() {
             setSumber("kirim");
             setKirimInput(baru.nominalAwal);
           }}
-          className="min-w-0 grow h-14 border-none bg-transparent font-[inherit] text-[19px] font-semibold text-teks outline-none cursor-pointer"
+          className="min-w-0 grow h-14 border-none bg-transparent font-[inherit] text-[19px] font-medium text-teks outline-none cursor-pointer"
         >
           {NEGARA.map((x) => (
             <option key={x.kode} value={x.kode}>
@@ -96,7 +96,7 @@ export function Kalkulator() {
             }}
             className={input}
           />
-          <span className="flex items-center gap-2 text-[17px] font-bold">
+          <span className="flex items-center gap-2 text-[17px] font-semibold">
             <Bendera kode={kode} size={22} />
             {n.mataUang}
           </span>
@@ -119,14 +119,14 @@ export function Kalkulator() {
             }}
             className={input}
           />
-          <span className="flex items-center gap-2 text-[17px] font-bold">
+          <span className="flex items-center gap-2 text-[17px] font-semibold">
             <Bendera kode="ID" size={22} />
             IDR
           </span>
         </div>
       </div>
 
-      <div className="rounded-[22px] border border-[#E1DED6] px-5 py-3.5 flex flex-col gap-0.5 focus-within:border-hijau">
+      <div className="rounded-[16px] border border-[#E1DED6] px-5 py-3.5 flex flex-col gap-0.5 focus-within:border-hijau">
         <label htmlFor="cara" className={label}>
           Diterima lewat
         </label>
@@ -134,38 +134,38 @@ export function Kalkulator() {
           id="cara"
           value={cara}
           onChange={(e) => setCara(e.target.value)}
-          className="h-10 border-none bg-transparent p-0 font-[inherit] text-[22px] font-bold text-teks outline-none cursor-pointer"
+          className="h-10 border-none bg-transparent p-0 font-[inherit] text-[22px] font-semibold text-teks outline-none cursor-pointer"
         >
           <option>Rekening bank</option>
           <option>E-wallet</option>
         </select>
       </div>
 
-      <div className="flex items-center justify-between gap-2.5 rounded-xl bg-oranye px-3.5 py-2.5 text-[15px] font-bold">
+      <div className="flex items-center justify-between gap-2.5 rounded-xl bg-oranye px-3.5 py-2.5 text-[15px] font-semibold">
         <span>Kurs ilustrasi</span>
         <span>
           1 {n.mataUang} = Rp{rupiah(n.kurs)}
         </span>
       </div>
 
-      <div className="rounded-[18px] bg-panel px-4 py-3.5 flex flex-col gap-2.5 text-[15px]">
+      <div className="rounded-[14px] bg-panel px-4 py-3.5 flex flex-col gap-2.5 text-[15px]">
         <div className="flex justify-between">
           <span className="text-abu">Biaya kirim</span>
-          <span className="font-semibold">
+          <span className="font-medium">
             {n.simbol}
             {rupiah(biaya)}
           </span>
         </div>
         <div className="flex justify-between">
           <span className="text-abu">Total bayar</span>
-          <span className="font-semibold">
+          <span className="font-medium">
             {n.simbol}
             {rupiah(total)}
           </span>
         </div>
         <div className="flex flex-wrap justify-between gap-2 border-t border-[#E1DED6] pt-2.5">
-          <span className="font-bold">Bagi hasil untukmu</span>
-          <span className="font-extrabold text-hijau">
+          <span className="font-semibold">Bagi hasil untukmu</span>
+          <span className="font-semibold text-hijau">
             Rp{rupiah(bagiRupiah)} + {n.simbol}
             {rupiah(bagiAsal)}
           </span>
@@ -176,7 +176,7 @@ export function Kalkulator() {
         href={linkWhatsApp(pesan)}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex h-[60px] items-center justify-center gap-2.5 rounded-full bg-hijau-tua text-lg font-bold text-white no-underline hover:bg-[#2A441D] hover:text-white"
+        className="flex h-[60px] items-center justify-center gap-2.5 rounded-full bg-hijau-tua text-lg font-medium text-white no-underline hover:bg-[#2A441D] hover:text-white"
       >
         <IkonWhatsApp size={22} />
         Lanjut di WhatsApp

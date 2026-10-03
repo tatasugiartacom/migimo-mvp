@@ -22,9 +22,9 @@ const waProps = { href: WA, target: "_blank", rel: "noopener noreferrer" } as co
 
 const wadah = "mx-auto max-w-[1180px] px-6";
 const tombolGelap =
-  "self-start rounded-full bg-hijau-tua px-7 py-4 text-[17px] font-bold text-white no-underline hover:bg-[#2A441D] hover:text-white";
+  "self-start rounded-full bg-hijau-tua px-7 py-4 text-[17px] font-semibold text-white no-underline hover:bg-[#2A441D] hover:text-white";
 const judulBento =
-  "m-0 text-[clamp(34px,3.8vw,52px)] leading-[1.04] font-extrabold tracking-[-0.03em]";
+  "m-0 text-[clamp(34px,3.8vw,52px)] leading-[1.04] font-semibold tracking-[-0.022em]";
 
 export default function Beranda() {
   return (
@@ -32,7 +32,7 @@ export default function Beranda() {
       {/* Banner oranye */}
       <a
         href="#kirim"
-        className="flex items-center justify-center gap-2.5 bg-oranye px-5 py-3 text-center text-[15px] font-bold text-teks no-underline hover:text-teks"
+        className="flex items-center justify-center gap-2.5 bg-oranye px-5 py-3 text-center text-[15px] font-semibold text-teks no-underline hover:text-teks"
       >
         <IkonHadiah />
         Bagi hasil di setiap kiriman
@@ -57,7 +57,7 @@ export default function Beranda() {
             ))}
             <a
               {...waProps}
-              className="flex items-center gap-2.5 rounded-full bg-hijau px-6 py-3.5 text-base font-bold whitespace-nowrap text-white no-underline hover:bg-[#3A5221] hover:text-white max-sm:px-5 max-sm:py-3"
+              className="flex items-center gap-2.5 rounded-full bg-hijau px-6 py-3.5 text-base font-medium whitespace-nowrap text-white no-underline hover:bg-[#3A5221] hover:text-white max-sm:px-5 max-sm:py-3"
             >
               <IkonWhatsApp size={20} />
               Mulai kirim
@@ -81,7 +81,7 @@ export default function Beranda() {
             </span>
             <Bendera kode="ID" size={72} />
           </div>
-          <h1 className="m-0 text-[clamp(44px,6vw,76px)] leading-[1.02] font-extrabold tracking-[-0.035em]">
+          <h1 className="m-0 text-[clamp(44px,6vw,76px)] leading-[1.02] font-semibold tracking-[-0.025em]">
             Semudah chat. Untungnya dibagi.
           </h1>
           <ul className="m-0 flex list-none flex-col gap-3.5 p-0">
@@ -106,7 +106,7 @@ export default function Beranda() {
           {NEGARA.map((n) => (
             <li
               key={n.kode}
-              className="flex items-center gap-2.5 whitespace-nowrap rounded-2xl border border-garis px-5 py-3 text-base font-medium"
+              className="flex items-center gap-2.5 whitespace-nowrap rounded-xl border border-garis/80 px-4 py-2.5 text-[15px] font-normal"
             >
               <Bendera kode={n.kode} size={26} />
               Kirim dari {n.nama}
@@ -117,9 +117,9 @@ export default function Beranda() {
 
       {/* Panel Economic Sharing */}
       <section className={`${wadah} pb-6`}>
-        <div className="flex flex-col items-center gap-[22px] rounded-[40px] bg-panel px-10 py-[88px] text-center max-sm:px-5 max-sm:py-16">
-          <div className="text-[17px] font-bold text-[#B5401A]">Economic Sharing</div>
-          <h2 className="m-0 max-w-[880px] text-[clamp(36px,5vw,64px)] leading-[1.05] font-extrabold tracking-[-0.03em]">
+        <div className="flex flex-col items-center gap-[22px] rounded-[28px] bg-panel px-10 py-[88px] text-center max-sm:px-5 max-sm:py-16">
+          <div className="text-[17px] font-semibold text-[#B5401A]">Economic Sharing</div>
+          <h2 className="m-0 max-w-[880px] text-[clamp(36px,5vw,64px)] leading-[1.05] font-semibold tracking-[-0.022em]">
             Dengan Migimo, untung kirimanmu kembali ke kamu
           </h2>
           <p className="m-0 max-w-[640px] text-xl leading-normal text-abu">
@@ -127,20 +127,20 @@ export default function Beranda() {
             Migimo, separuhnya untukmu.
           </p>
           <div className="mt-6 grid w-full max-w-[820px] grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-4">
-            <div className="flex flex-col gap-[18px] rounded-[28px] bg-white p-[30px] text-left">
-              <div className="text-lg font-bold text-[#5C6356]">Biasanya</div>
-              <div className="flex h-[52px] items-center rounded-[14px] bg-[#C9C5BA] px-[18px] text-[15px] font-bold text-teks">
+            <div className="flex flex-col gap-[18px] rounded-[20px] bg-white p-[30px] text-left">
+              <div className="text-lg font-semibold text-[#5C6356]">Biasanya</div>
+              <div className="flex h-[52px] items-center rounded-[14px] bg-[#C9C5BA] px-[18px] text-[15px] font-semibold text-teks">
                 100% untuk penyedia
               </div>
               <div className="text-[15px] text-[#5C6356]">Pengirim tidak dapat apa-apa.</div>
             </div>
-            <div className="flex flex-col gap-[18px] rounded-[28px] border-2 border-hijau bg-white p-[30px] text-left">
-              <div className="text-lg font-bold text-hijau">Di Migimo</div>
+            <div className="flex flex-col gap-[18px] rounded-[20px] border-2 border-hijau bg-white p-[30px] text-left">
+              <div className="text-lg font-semibold text-hijau">Di Migimo</div>
               <div className="flex h-[52px] gap-1">
-                <div className="flex flex-1 items-center rounded-l-[14px] bg-oranye px-4 text-[15px] font-extrabold">
+                <div className="flex flex-1 items-center rounded-l-[14px] bg-oranye px-4 text-[15px] font-semibold">
                   Kamu 50%
                 </div>
-                <div className="flex flex-1 items-center rounded-r-[14px] bg-hijau px-4 text-[15px] font-bold text-white">
+                <div className="flex flex-1 items-center rounded-r-[14px] bg-hijau px-4 text-[15px] font-semibold text-white">
                   Migimo 50%
                 </div>
               </div>
@@ -152,12 +152,12 @@ export default function Beranda() {
 
       {/* Kartu cerita pendiri */}
       <section id="cerita" className={`${wadah} flex scroll-mt-24 flex-wrap gap-6 pb-6`}>
-        <div className="flex min-h-[520px] grow-[3] shrink basis-[520px] flex-col items-center justify-center gap-3.5 rounded-[40px] bg-hijau-tua p-8 text-center text-[#C9D6BC] max-sm:min-h-[360px] max-sm:basis-full">
+        <div className="flex min-h-[520px] grow-[3] shrink basis-[520px] flex-col items-center justify-center gap-3.5 rounded-[28px] bg-hijau-tua p-8 text-center text-[#C9D6BC] max-sm:min-h-[360px] max-sm:basis-full">
           <IkonOrang />
-          <div className="text-base font-semibold">[Foto Tata Sugiarta]</div>
+          <div className="text-base font-medium">[Foto Tata Sugiarta]</div>
         </div>
-        <div className="box-border flex min-h-[520px] grow-[2] shrink basis-[380px] flex-col justify-center gap-[22px] rounded-[40px] bg-[#EEF3E8] px-12 py-14 max-sm:min-h-0 max-sm:basis-full max-sm:px-7">
-          <h2 className="m-0 text-[clamp(36px,4.4vw,56px)] leading-[1.05] font-extrabold tracking-[-0.03em]">
+        <div className="box-border flex min-h-[520px] grow-[2] shrink basis-[380px] flex-col justify-center gap-[22px] rounded-[28px] bg-[#EEF3E8] px-12 py-14 max-sm:min-h-0 max-sm:basis-full max-sm:px-7">
+          <h2 className="m-0 text-[clamp(36px,4.4vw,56px)] leading-[1.05] font-semibold tracking-[-0.022em]">
             Dibuat oleh mantan PMI Jepang
           </h2>
           <p className="m-0 text-[19px] leading-[1.55] text-[#3A4234]">
@@ -172,30 +172,30 @@ export default function Beranda() {
 
       {/* Bento 4 kartu */}
       <section className={`${wadah} flex flex-wrap gap-6 pb-6`}>
-        <div className="box-border flex min-h-[440px] grow-[2] shrink basis-[420px] flex-col justify-center gap-[18px] rounded-[40px] border border-garis bg-white px-12 py-14 max-sm:min-h-0 max-sm:basis-full max-sm:px-7">
-          <div className="text-base font-bold text-hijau">Mudah</div>
+        <div className="box-border flex min-h-[440px] grow-[2] shrink basis-[420px] flex-col justify-center gap-[18px] rounded-[28px] border border-garis bg-white px-12 py-14 max-sm:min-h-0 max-sm:basis-full max-sm:px-7">
+          <div className="text-base font-semibold text-hijau">Mudah</div>
           <h3 className={judulBento}>Rincian jelas sebelum bayar</h3>
           <p className="m-0 text-[19px] leading-normal text-abu">
             Kurs, biaya, dan bagi hasilmu tampil di chat sebelum kamu membayar.
           </p>
           <a
             href="#kirim"
-            className="self-start rounded-full bg-[#EEEBE4] px-[26px] py-[15px] text-[17px] font-bold text-teks no-underline hover:bg-[#E3DFD5] hover:text-teks"
+            className="self-start rounded-full bg-[#EEEBE4] px-[26px] py-[15px] text-[17px] font-medium text-teks no-underline hover:bg-[#E3DFD5] hover:text-teks"
           >
             Mulai kirim
           </a>
         </div>
 
-        <div className="box-border flex min-h-[440px] grow-[3] shrink basis-[520px] flex-wrap gap-7 overflow-hidden rounded-[40px] bg-hijau px-12 pt-14 text-white max-sm:basis-full max-sm:px-7">
+        <div className="box-border flex min-h-[440px] grow-[3] shrink basis-[520px] flex-wrap gap-7 overflow-hidden rounded-[28px] bg-hijau px-12 pt-14 text-white max-sm:basis-full max-sm:px-7">
           <div className="flex grow shrink basis-[260px] flex-col justify-center gap-[18px] pb-14">
-            <div className="text-base font-bold text-[#D9E6CF]">Mudah</div>
+            <div className="text-base font-semibold text-[#D9E6CF]">Mudah</div>
             <h3 className={judulBento}>Semua lewat WhatsApp</h3>
             <p className="m-0 text-[19px] leading-normal text-[#E4EDDB]">
               Secepat kirim pesan. Tidak perlu antre, tidak perlu aplikasi baru.
             </p>
             <a
               {...waProps}
-              className="self-start rounded-full bg-hijau-tua px-[26px] py-[15px] text-[17px] font-bold text-white no-underline hover:bg-[#2A441D] hover:text-white"
+              className="self-start rounded-full bg-hijau-tua px-[26px] py-[15px] text-[17px] font-medium text-white no-underline hover:bg-[#2A441D] hover:text-white"
             >
               Kirim lewat WhatsApp
             </a>
@@ -209,7 +209,7 @@ export default function Beranda() {
                 <div className="flex size-[30px] items-center justify-center rounded-full border border-[#ECECF0]">
                   <TandaMigimo width={20} height={11} />
                 </div>
-                <span className="text-[13px] font-bold text-teks">Migimo</span>
+                <span className="text-[13px] font-semibold text-teks">Migimo</span>
               </div>
               <div className="flex flex-col gap-2 px-2.5 pt-3 pb-5 text-xs text-teks">
                 <div className="self-start rounded-[4px_14px_14px_14px] bg-white px-2.5 py-2">
@@ -231,28 +231,28 @@ export default function Beranda() {
           </div>
         </div>
 
-        <div className="box-border flex min-h-[440px] grow-[3] shrink basis-[520px] flex-wrap items-center gap-7 rounded-[40px] bg-hijau-tua px-12 py-14 text-white max-sm:min-h-0 max-sm:basis-full max-sm:px-7">
+        <div className="box-border flex min-h-[440px] grow-[3] shrink basis-[520px] flex-wrap items-center gap-7 rounded-[28px] bg-hijau-tua px-12 py-14 text-white max-sm:min-h-0 max-sm:basis-full max-sm:px-7">
           <div className="flex grow shrink basis-[280px] flex-col gap-[18px]">
-            <div className="text-base font-bold text-oranye">Economic Sharing</div>
+            <div className="text-base font-semibold text-oranye">Economic Sharing</div>
             <h3 className={judulBento}>Separuh untungnya untukmu</h3>
             <p className="m-0 text-[19px] leading-normal text-[#C9D6BC]">
               Bagi hasil di setiap kiriman, bukan cuma yang pertama.
             </p>
             <a
               {...waProps}
-              className="self-start rounded-full bg-white px-[26px] py-[15px] text-[17px] font-bold text-teks no-underline hover:bg-panel hover:text-teks"
+              className="self-start rounded-full bg-white px-[26px] py-[15px] text-[17px] font-medium text-teks no-underline hover:bg-panel hover:text-teks"
             >
               Mulai kirim
             </a>
           </div>
           <div className="flex size-[200px] shrink-0 flex-col items-center justify-center rounded-full bg-oranye text-teks">
-            <span className="text-[64px] leading-none font-extrabold tracking-[-0.04em]">50%</span>
-            <span className="text-[15px] font-bold">untuk kamu</span>
+            <span className="text-[64px] leading-none font-semibold tracking-[-0.022em]">50%</span>
+            <span className="text-[15px] font-semibold">untuk kamu</span>
           </div>
         </div>
 
-        <div className="box-border flex min-h-[440px] grow-[2] shrink basis-[420px] flex-col justify-center gap-[18px] rounded-[40px] bg-[#FEF1DD] px-12 py-14 max-sm:min-h-0 max-sm:basis-full max-sm:px-7">
-          <div className="text-base font-bold text-[#B5401A]">Economic Sharing</div>
+        <div className="box-border flex min-h-[440px] grow-[2] shrink basis-[420px] flex-col justify-center gap-[18px] rounded-[28px] bg-[#FEF1DD] px-12 py-14 max-sm:min-h-0 max-sm:basis-full max-sm:px-7">
+          <div className="text-base font-semibold text-[#B5401A]">Economic Sharing</div>
           <h3 className={judulBento}>Bayar pakai QRIS Cross Border</h3>
           <p className="m-0 text-[19px] leading-normal text-[#4A3A22]">
             Tersedia dari Jepang, Malaysia, Singapura, Thailand, Korea Selatan, dan Tiongkok.
@@ -265,10 +265,10 @@ export default function Beranda() {
 
       {/* Panel 3 langkah + grid 6 negara */}
       <section id="negara" className={`${wadah} scroll-mt-24 pb-6`}>
-        <div className="flex flex-col gap-[72px] rounded-[40px] bg-panel px-12 py-[88px] max-sm:px-5 max-sm:py-16">
+        <div className="flex flex-col gap-[72px] rounded-[28px] bg-panel px-12 py-[88px] max-sm:px-5 max-sm:py-16">
           <div className="flex flex-wrap items-start gap-10">
             <div className="flex grow shrink basis-[380px] flex-col gap-8 max-sm:basis-full">
-              <h2 className="m-0 text-[clamp(36px,4.6vw,60px)] leading-[1.04] font-extrabold tracking-[-0.03em]">
+              <h2 className="m-0 text-[clamp(36px,4.6vw,60px)] leading-[1.04] font-semibold tracking-[-0.022em]">
                 Kirim uang ke Indonesia dalam 3 langkah
               </h2>
               <a {...waProps} className={tombolGelap}>
@@ -287,9 +287,9 @@ export default function Beranda() {
                   "Keluarga menerima kiriman di Indonesia. Bagi hasilmu tercatat di akun Migimo.",
                 ],
               ].map(([judul, isi], i) => (
-                <li key={judul} className="flex flex-col gap-3.5 rounded-[32px] bg-white px-9 pt-9 pb-10 max-sm:px-6">
-                  <div className="text-[56px] leading-none font-extrabold tracking-[-0.03em]">{i + 1}</div>
-                  <div className="text-[26px] font-bold tracking-[-0.01em]">{judul}</div>
+                <li key={judul} className="flex flex-col gap-3.5 rounded-[16px] bg-white px-9 pt-9 pb-10 max-sm:px-6">
+                  <div className="text-[56px] leading-none font-semibold tracking-[-0.022em]">{i + 1}</div>
+                  <div className="text-[26px] font-semibold tracking-[-0.01em]">{judul}</div>
                   <div className="text-lg leading-[1.55] text-[#5C6356]">{isi}</div>
                 </li>
               ))}
@@ -300,12 +300,12 @@ export default function Beranda() {
               <a
                 key={n.kode}
                 href="#kirim"
-                className="box-border flex min-h-[210px] flex-col justify-between gap-5 rounded-[32px] bg-[#E6E2D8] px-[30px] py-7 text-teks no-underline transition-colors hover:bg-[#DCD7CA] hover:text-teks"
+                className="box-border flex min-h-[210px] flex-col justify-between gap-5 rounded-[16px] bg-[#E6E2D8] px-[30px] py-7 text-teks no-underline transition-colors hover:bg-[#DCD7CA] hover:text-teks"
               >
                 <span className="flex size-[60px] overflow-hidden rounded-full">
                   <Bendera kode={n.kode} size={60} />
                 </span>
-                <span className="text-[28px] leading-[1.1] font-extrabold tracking-[-0.02em]">Kirim dari {n.nama}</span>
+                <span className="text-[28px] leading-[1.1] font-semibold tracking-[-0.015em]">Kirim dari {n.nama}</span>
               </a>
             ))}
           </div>
@@ -314,15 +314,15 @@ export default function Beranda() {
 
       {/* Panel penutup putih */}
       <section className={`${wadah} pb-6`}>
-        <div className="flex flex-col items-center gap-10 rounded-[40px] border border-garis bg-white px-12 py-24 text-center max-sm:px-6 max-sm:py-16">
-          <div className="font-caveat text-[clamp(44px,6.4vw,92px)] leading-[1.1] font-bold text-hijau-tua">
+        <div className="flex flex-col items-center gap-10 rounded-[28px] border border-garis bg-white px-12 py-24 text-center max-sm:px-6 max-sm:py-16">
+          <div className="font-caveat text-[clamp(36px,4.4vw,60px)] leading-[1.15] font-bold text-hijau-tua">
             Berangkat Migran,
             <br />
             Pulang Juragan.
           </div>
           <a
             {...waProps}
-            className="rounded-full bg-oranye px-8 py-[18px] text-lg font-extrabold text-teks no-underline hover:bg-[#E89214] hover:text-teks"
+            className="rounded-full bg-oranye px-8 py-[18px] text-lg font-medium text-teks no-underline hover:bg-[#E89214] hover:text-teks"
           >
             Mulai kirim
           </a>
@@ -426,7 +426,7 @@ function LogoMigimo({ priority = false }: { priority?: boolean }) {
 function KolomFooter({ judul, tautan }: { judul: string; tautan: [string, string][] }) {
   return (
     <div className="flex flex-col gap-3">
-      <div className="text-base font-bold text-teks">{judul}</div>
+      <div className="text-base font-semibold text-teks">{judul}</div>
       {tautan.map(([teks, href]) => (
         <a
           key={teks}
