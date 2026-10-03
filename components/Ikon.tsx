@@ -98,11 +98,31 @@ export function IkonFacebook() {
   );
 }
 
-export function IkonTikTok() {
+export function IkonThreads() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" strokeWidth="2" aria-hidden="true" {...garis}>
-      <path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5" />
-      <path d="M14 3c.5 2.5 2.5 4.5 5 4.5" />
+      <path d="M16.5 11.2c-.4-2.6-2.1-3.9-4.4-3.9-2.4 0-4 1.6-4.2 3.6" />
+      <path d="M16.6 11.4c-2.9-.9-7.1-.6-7.1 2.2 0 1.6 1.5 2.4 3 2.3 2.6-.1 4-1.9 4-5.2" />
+      <path d="M19 6.5C17.5 4.3 15.2 3 12 3 6.8 3 4 6.6 4 12s2.8 9 8 9c3.6 0 6.6-1.8 7.3-4.7.6-2.6-.6-4.6-2.8-5.6" />
+    </svg>
+  );
+}
+
+export function IkonX() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" strokeWidth="2" aria-hidden="true" {...garis}>
+      <path d="M4 4l16 16" />
+      <path d="M20 4l-6.6 7.2" />
+      <path d="M10.6 12.8L4 20" />
+    </svg>
+  );
+}
+
+export function IkonYouTube() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" strokeWidth="2" aria-hidden="true" {...garis}>
+      <rect x="2.5" y="5" width="19" height="14" rx="4" />
+      <path d="M10 9.2v5.6l4.8-2.8z" />
     </svg>
   );
 }

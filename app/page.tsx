@@ -9,12 +9,14 @@ import {
   IkonOrang,
   IkonPanah,
   IkonPanahBesar,
-  IkonTikTok,
+  IkonThreads,
   IkonWhatsApp,
+  IkonX,
+  IkonYouTube,
   TandaMigimo,
 } from "@/components/Ikon";
 import { Kalkulator } from "@/components/Kalkulator";
-import { NEGARA, linkWhatsApp } from "@/lib/negara";
+import { NEGARA, NOMOR_WA, linkWhatsApp } from "@/lib/negara";
 
 const WA = linkWhatsApp("Halo Migimo, saya mau kirim uang.");
 const waProps = { href: WA, target: "_blank", rel: "noopener noreferrer" } as const;
@@ -38,40 +40,42 @@ export default function Beranda() {
         <IkonPanah />
       </a>
 
-      {/* Navbar */}
-      <header className={`${wadah} flex flex-wrap items-center justify-between gap-4 py-[18px]`}>
-        <a href="/" aria-label="Migimo beranda" className="flex">
-          <Image src="/logo-migimo.png" alt="Migimo" width={1200} height={270} priority className="block h-[30px] w-auto" />
-        </a>
-        <nav className="flex flex-wrap items-center gap-x-7 gap-y-2">
-          {[
-            ["Kirim uang", "#negara"],
-            ["Kurs hari ini", "#kirim"],
-            ["Tentang Migimo", "#cerita"],
-          ].map(([teks, href]) => (
-            <a
-              key={teks}
-              href={href}
-              className="flex items-center gap-1.5 py-2.5 text-base font-medium text-teks no-underline hover:text-hijau"
-            >
-              {teks}
-              <IkonBawah />
-            </a>
-          ))}
-          <a
-            {...waProps}
-            className="flex items-center gap-2.5 rounded-full bg-hijau px-6 py-3.5 text-base font-bold text-white no-underline hover:bg-[#3A5221] hover:text-white"
-          >
-            <IkonWhatsApp size={20} />
-            Mulai kirim
+      {/* Navbar (sticky) */}
+      <div className="sticky top-0 z-50 border-b border-garis/70 bg-white shadow-[0_1px_12px_rgba(20,32,14,0.06)]">
+        <header className={`${wadah} flex items-center justify-between gap-4 py-3.5`}>
+          <a href="/" aria-label="Migimo beranda" className="flex shrink-0">
+            <LogoMigimo priority />
           </a>
-        </nav>
-      </header>
+          <nav className="flex items-center gap-x-7">
+            {[
+              ["Kirim uang", "#negara"],
+              ["Kurs hari ini", "#kirim"],
+              ["Tentang Migimo", "#cerita"],
+            ].map(([teks, href]) => (
+              <a
+                key={teks}
+                href={href}
+                className="hidden items-center gap-1.5 py-2.5 text-base font-medium text-teks no-underline hover:text-hijau lg:flex"
+              >
+                {teks}
+                <IkonBawah />
+              </a>
+            ))}
+            <a
+              {...waProps}
+              className="flex items-center gap-2.5 rounded-full bg-hijau px-6 py-3.5 text-base font-bold whitespace-nowrap text-white no-underline hover:bg-[#3A5221] hover:text-white max-sm:px-5 max-sm:py-3"
+            >
+              <IkonWhatsApp size={20} />
+              Mulai kirim
+            </a>
+          </nav>
+        </header>
+      </div>
 
       {/* Hero dua kolom + kalkulator */}
       <section
         id="kirim"
-        className={`${wadah} flex scroll-mt-4 flex-wrap items-center justify-between gap-14 pt-14 pb-[88px]`}
+        className={`${wadah} flex scroll-mt-24 flex-wrap items-center justify-between gap-14 pt-14 pb-[88px]`}
       >
         <div className="flex grow shrink basis-[480px] flex-col gap-7 max-sm:basis-full">
           <div className="flex items-center gap-[18px]">
@@ -153,7 +157,7 @@ export default function Beranda() {
       </section>
 
       {/* Kartu cerita pendiri */}
-      <section id="cerita" className={`${wadah} flex scroll-mt-4 flex-wrap gap-6 pb-6`}>
+      <section id="cerita" className={`${wadah} flex scroll-mt-24 flex-wrap gap-6 pb-6`}>
         <div className="flex min-h-[520px] grow-[3] shrink basis-[520px] flex-col items-center justify-center gap-3.5 rounded-[40px] bg-hijau-tua p-8 text-center text-[#C9D6BC] max-sm:min-h-[360px] max-sm:basis-full">
           <IkonOrang />
           <div className="text-base font-semibold">[Foto Tata Sugiarta]</div>
@@ -266,7 +270,7 @@ export default function Beranda() {
       </section>
 
       {/* Panel 3 langkah + grid 6 negara */}
-      <section id="negara" className={`${wadah} scroll-mt-4 pb-6`}>
+      <section id="negara" className={`${wadah} scroll-mt-24 pb-6`}>
         <div className="flex flex-col gap-[72px] rounded-[40px] bg-panel px-12 py-[88px] max-sm:px-5 max-sm:py-16">
           <div className="flex flex-wrap items-start gap-10">
             <div className="flex grow shrink basis-[380px] flex-col gap-8 max-sm:basis-full">
@@ -318,14 +322,10 @@ export default function Beranda() {
       <footer className={`${wadah} pb-10`}>
         <div className="flex flex-col gap-14 overflow-hidden rounded-[40px] bg-hijau-tua px-12 pt-24 pb-12 text-white max-sm:px-6 max-sm:pt-16">
           <div className="flex flex-col items-center gap-10 text-center">
-            <div className="font-caveat text-[clamp(60px,10vw,156px)] leading-[1.05] font-bold">
-              Berangkat
-              <Bulatan />
-              Migran,
+            <div className="font-caveat text-[clamp(44px,6.4vw,92px)] leading-[1.1] font-bold">
+              Berangkat Migran,
               <br />
-              Pulang
-              <Bulatan />
-              Juragan.
+              Pulang Juragan.
             </div>
             <a
               {...waProps}
@@ -336,61 +336,86 @@ export default function Beranda() {
           </div>
 
           <div className="flex flex-wrap gap-10 border-t border-[#3F5531] pt-12">
-            <div className="flex grow shrink basis-[200px] flex-col gap-3.5">
-              <div className="flex items-center gap-2.5">
-                <TandaMigimo />
-                <span className="text-[30px] font-extrabold tracking-[-0.02em]">migimo</span>
+            <div className="flex grow shrink basis-[260px] flex-col items-start gap-5">
+              <a href="/" aria-label="Migimo beranda" className="flex rounded-xl bg-white px-4 py-3">
+                <LogoMigimo />
+              </a>
+              <p className="m-0 max-w-[300px] text-[15px] leading-relaxed text-[#C9D6BC]">
+                Kirim uang ke Indonesia lewat WhatsApp, dengan bagi hasil di setiap kiriman.
+              </p>
+              <div className="flex flex-col gap-2 text-[15px] text-[#C9D6BC]">
+                <a {...waProps} className="text-[#C9D6BC] no-underline hover:text-white">
+                  WhatsApp: {formatNomor(NOMOR_WA)}
+                </a>
+                <span>Email: [EMAIL_LAYANAN_PELANGGAN]</span>
+                <span>Jam layanan: [JAM_LAYANAN]</span>
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                {SOSIAL.map(([nama, href, ikon]) => (
+                  <a
+                    key={nama}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Migimo di ${nama}`}
+                    className="flex size-11 items-center justify-center rounded-xl border border-[#3F5531] text-white hover:border-[#C9D6BC] hover:text-white"
+                  >
+                    {ikon}
+                  </a>
+                ))}
               </div>
             </div>
-            <div className="grid grow-[3] shrink basis-[640px] grid-cols-[repeat(auto-fit,minmax(min(190px,100%),1fr))] gap-8 max-sm:basis-full">
+            <div className="grid grow-[3] shrink basis-[640px] grid-cols-[repeat(auto-fit,minmax(min(170px,100%),1fr))] gap-8 max-sm:basis-full">
               <KolomFooter
-                judul="Kirim uang"
+                judul="Layanan"
                 tautan={[
                   ["Kirim uang lewat WhatsApp", WA],
-                  ...NEGARA.map((n) => [`Kirim uang dari ${n.nama}`, "#negara"] as [string, string]),
+                  ["Kalkulator kurs", "#kirim"],
+                  ["Negara asal", "#negara"],
+                  ["Cara kirim", "#negara"],
+                  ["Bagi hasil (Economic Sharing)", "#kirim"],
                 ]}
               />
               <KolomFooter
-                judul="Kurs hari ini"
-                tautan={NEGARA.map((n) => [`Kurs ${n.namaKurs} hari ini`, "#kirim"] as [string, string])}
-              />
-              <KolomFooter
-                judul="Panduan"
+                judul="Perusahaan"
                 tautan={[
-                  ["Panduan PMI", "#negara"],
-                  ["Bantuan", "#negara"],
+                  ["Tentang kami", "#cerita"],
+                  ["Kontak", WA],
                 ]}
               />
-              <div className="flex flex-col gap-[22px]">
-                <KolomFooter
-                  judul="Tentang Migimo"
-                  tautan={[
-                    ["Tentang kami", "#cerita"],
-                    ["Syarat dan ketentuan", "#cerita"],
-                    ["Kebijakan privasi", "#cerita"],
-                  ]}
-                />
-                <div className="flex flex-col gap-3">
-                  <div className="text-lg font-bold">Sosial</div>
-                  <div className="flex gap-2.5">
-                    {(
-                      [
-                        ["Instagram", <IkonInstagram key="ig" />],
-                        ["Facebook", <IkonFacebook key="fb" />],
-                        ["TikTok", <IkonTikTok key="tt" />],
-                      ] as const
-                    ).map(([nama, ikon]) => (
-                      <a
-                        key={nama}
-                        href="#"
-                        aria-label={nama}
-                        className="flex size-11 items-center justify-center rounded-xl border border-[#3F5531] text-white hover:border-[#C9D6BC] hover:text-white"
-                      >
-                        {ikon}
-                      </a>
-                    ))}
-                  </div>
-                </div>
+              <KolomFooter
+                judul="Bantuan"
+                tautan={[
+                  ["Pusat bantuan", WA],
+                  ["Pertanyaan umum (FAQ)", "#"],
+                  ["Layanan pengaduan", "#"],
+                  ["Tips keamanan", "#"],
+                ]}
+              />
+              <KolomFooter
+                judul="Legal"
+                tautan={[
+                  ["Syarat dan ketentuan", "#"],
+                  ["Kebijakan privasi", "#"],
+                  ["Kebijakan APU-PPT", "#"],
+                  ["Kebijakan pengaduan konsumen", "#"],
+                ]}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-6 border-t border-[#3F5531] pt-10 text-[13px] leading-[1.6] text-[#A9B99B] md:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
+              <div className="text-sm font-bold text-white">Layanan pengaduan konsumen</div>
+              <div>PT Niaga Teknologi Indonesia</div>
+              <div>[ALAMAT_KANTOR]</div>
+              <div>Email: [EMAIL_PENGADUAN] · WhatsApp: {formatNomor(NOMOR_WA)}</div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <div className="text-sm font-bold text-white">Keamanan akun</div>
+              <div>
+                Migimo tidak pernah meminta PIN, OTP, atau kata sandi kamu. Pastikan kamu hanya bertransaksi lewat nomor
+                WhatsApp resmi Migimo yang tercantum di halaman ini.
               </div>
             </div>
           </div>
@@ -408,11 +433,30 @@ export default function Beranda() {
   );
 }
 
-function Bulatan() {
+const SOSIAL: [string, string, React.ReactNode][] = [
+  ["Instagram", "https://www.instagram.com/migimoid/", <IkonInstagram key="ig" />],
+  ["Facebook", "https://www.facebook.com/migimoid", <IkonFacebook key="fb" />],
+  ["Threads", "https://www.threads.com/@migimoid", <IkonThreads key="th" />],
+  ["X", "https://x.com/Migimoid", <IkonX key="x" />],
+  ["YouTube", "https://www.youtube.com/@MigimoID", <IkonYouTube key="yt" />],
+];
+
+function formatNomor(n: string) {
+  // 6281284323000 -> +62 812-8432-3000
+  const lokal = n.replace(/^62/, "");
+  return `+62 ${lokal.slice(0, 3)}-${lokal.slice(3, 7)}-${lokal.slice(7)}`;
+}
+
+function LogoMigimo({ priority = false }: { priority?: boolean }) {
   return (
-    <span className="mx-[0.15em] inline-flex size-[clamp(64px,8vw,120px)] items-center justify-center rounded-full bg-white align-middle">
-      <TandaMigimo width="60%" height="40%" />
-    </span>
+    <Image
+      src="/logo-migimo.png"
+      alt="Migimo"
+      width={1200}
+      height={270}
+      priority={priority}
+      className="block h-[30px] w-auto"
+    />
   );
 }
 
