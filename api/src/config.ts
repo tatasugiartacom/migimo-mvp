@@ -44,7 +44,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
       /** Token bebas yang juga diisikan di pengaturan webhook Meta. */
       verifyToken: env.WA_VERIFY_TOKEN ?? "",
       graphBaseUrl: (env.WA_GRAPH_BASE_URL ?? "https://graph.facebook.com").replace(/\/$/, ""),
-      graphVersion: env.WA_GRAPH_VERSION ?? "v23.0",
+      graphVersion: env.WA_GRAPH_VERSION ?? "v25.0",
       /** Batas nominal QRIS per transaksi (rupiah). */
       maxRupiah: Number(env.WA_MAX_RUPIAH ?? 10_000_000),
     },
