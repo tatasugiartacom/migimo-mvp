@@ -1,7 +1,6 @@
 import Image from "next/image";
 import { Bendera } from "@/components/Bendera";
 import {
-  IkonBawah,
   IkonCentang,
   IkonFacebook,
   IkonHadiah,
@@ -55,10 +54,9 @@ export default function Beranda() {
               <a
                 key={teks}
                 href={href}
-                className="hidden items-center gap-1.5 py-2.5 text-base font-medium text-teks no-underline hover:text-hijau lg:flex"
+                className="hidden items-center py-2.5 text-base font-medium text-teks no-underline hover:text-hijau lg:flex"
               >
                 {teks}
-                <IkonBawah />
               </a>
             ))}
             <a

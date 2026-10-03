@@ -45,14 +45,6 @@ export function IkonPanahBesar({ size = 44 }: P) {
   );
 }
 
-export function IkonBawah({ size = 14 }: P) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" strokeWidth="2.4" aria-hidden="true" {...garis}>
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  );
-}
-
 export function IkonCentang({ size = 22 }: P) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" strokeWidth="2.4" aria-hidden="true" className="shrink-0" {...garis}>
