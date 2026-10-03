@@ -46,11 +46,7 @@ export default function Beranda() {
             <LogoMigimo priority />
           </a>
           <nav className="flex items-center gap-x-7">
-            {[
-              ["Kirim Uang", "#kirim"],
-              ["Cara", "#negara"],
-              ["Tentang", "#cerita"],
-            ].map(([teks, href]) => (
+            {MENU.map(([teks, href]) => (
               <a
                 key={teks}
                 href={href}
@@ -334,72 +330,39 @@ export default function Beranda() {
       </section>
 
       {/* Footer */}
-      <footer className={`${wadah} pb-10`}>
-        <div className="flex flex-col gap-14 overflow-hidden rounded-[40px] bg-hijau-tua px-12 pt-16 pb-12 text-white max-sm:px-6">
-          <div className="flex flex-wrap gap-10">
-            <div className="flex grow shrink basis-[260px] flex-col items-start gap-5">
-              <a href="/" aria-label="Migimo beranda" className="flex rounded-xl bg-white px-4 py-3">
-                <LogoMigimo />
+      <footer className="mt-10 border-t border-garis">
+        <div className={`${wadah} flex flex-wrap items-center justify-between gap-x-10 gap-y-6 py-10`}>
+          <a href="/" aria-label="Migimo beranda" className="flex">
+            <LogoMigimo />
+          </a>
+          <nav aria-label="Footer" className="flex flex-wrap items-center gap-x-7 gap-y-2">
+            {MENU.map(([teks, href]) => (
+              <a key={teks} href={href} className="py-2 text-[15px] font-medium text-teks no-underline hover:text-hijau">
+                {teks}
               </a>
-              <p className="m-0 max-w-[300px] text-[15px] leading-relaxed text-[#C9D6BC]">
-                Kirim uang ke Indonesia lewat WhatsApp, dengan bagi hasil di setiap kiriman.
-              </p>
-              <div className="flex flex-wrap gap-2.5">
-                {SOSIAL.map(([nama, href, ikon]) => (
-                  <a
-                    key={nama}
-                    href={href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`Migimo di ${nama}`}
-                    className="flex size-11 items-center justify-center rounded-xl border border-[#3F5531] text-white hover:border-[#C9D6BC] hover:text-white"
-                  >
-                    {ikon}
-                  </a>
-                ))}
-              </div>
-            </div>
-            <div className="grid grow-[3] shrink basis-[640px] grid-cols-[repeat(auto-fit,minmax(min(170px,100%),1fr))] gap-8 max-sm:basis-full">
-              <KolomFooter
-                judul="Layanan"
-                tautan={[
-                  ["Kirim uang lewat WhatsApp", WA],
-                  ["Kalkulator kurs", "#kirim"],
-                  ["Negara asal", "#negara"],
-                  ["Cara kirim", "#negara"],
-                  ["Bagi hasil (Economic Sharing)", "#kirim"],
-                ]}
-              />
-              <KolomFooter
-                judul="Perusahaan"
-                tautan={[
-                  ["Tentang kami", "#cerita"],
-                  ["Kontak", WA],
-                ]}
-              />
-              <KolomFooter
-                judul="Bantuan"
-                tautan={[
-                  ["Pusat bantuan", WA],
-                  ["Pertanyaan umum (FAQ)", "#"],
-                  ["Layanan pengaduan", "#"],
-                  ["Tips keamanan", "#"],
-                ]}
-              />
-              <KolomFooter
-                judul="Legal"
-                tautan={[
-                  ["Syarat dan ketentuan", "#"],
-                  ["Kebijakan privasi", "#"],
-                  ["Kebijakan APU-PPT", "#"],
-                  ["Kebijakan pengaduan konsumen", "#"],
-                ]}
-              />
-            </div>
+            ))}
+            <a {...waProps} className="py-2 text-[15px] font-medium text-teks no-underline hover:text-hijau">
+              WhatsApp
+            </a>
+          </nav>
+          <div className="flex flex-wrap gap-2">
+            {SOSIAL.map(([nama, href, ikon]) => (
+              <a
+                key={nama}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Migimo di ${nama}`}
+                className="flex size-11 items-center justify-center rounded-xl border border-garis text-teks hover:border-hijau hover:text-hijau"
+              >
+                {ikon}
+              </a>
+            ))}
           </div>
-
-          <div className="mx-auto flex max-w-[860px] flex-col border-t border-[#3F5531] pt-10 gap-1.5 text-center text-[13px] leading-[1.6] text-[#A9B99B]">
-            <div>
+        </div>
+        <div className="border-t border-garis">
+          <div className={`${wadah} flex flex-col gap-1.5 py-8 text-center text-[13px] leading-[1.6] text-[#5C6356]`}>
+            <div className="mx-auto max-w-[860px]">
               Migimo dikelola oleh PT Niaga Teknologi Indonesia sebagai penyedia platform. Transaksi pembayaran diproses
               oleh [mitra pembayaran berizin Bank Indonesia]. Kurs dan bagi hasil di halaman ini adalah ilustrasi.
             </div>
@@ -410,6 +373,12 @@ export default function Beranda() {
     </div>
   );
 }
+
+const MENU = [
+  ["Kirim Uang", "#kirim"],
+  ["Cara", "#negara"],
+  ["Tentang", "#cerita"],
+] as const;
 
 const SOSIAL: [string, string, React.ReactNode][] = [
   ["Instagram", "https://www.instagram.com/migimoid/", <IkonInstagram key="ig" />],
@@ -429,23 +398,5 @@ function LogoMigimo({ priority = false }: { priority?: boolean }) {
       priority={priority}
       className="block h-[30px] w-auto"
     />
-  );
-}
-
-function KolomFooter({ judul, tautan }: { judul: string; tautan: [string, string][] }) {
-  return (
-    <div className="flex flex-col gap-3.5">
-      <div className="text-lg font-bold text-white">{judul}</div>
-      {tautan.map(([teks, href]) => (
-        <a
-          key={teks}
-          href={href}
-          {...(href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-          className="text-[15px] text-[#C9D6BC] no-underline hover:text-white"
-        >
-          {teks}
-        </a>
-      ))}
-    </div>
   );
 }
