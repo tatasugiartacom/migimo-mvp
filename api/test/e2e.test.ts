@@ -189,3 +189,12 @@ test("login Google: email terdaftar masuk, lainnya ditolak, CSRF dan audit", asy
   assert.ok(audit.some((a: any) => a.actor === "admin@migimo.id" && a.action === "/admin/uat/run/:no"));
   await app.close();
 });
+
+test("favicon tersedia di semua host API", async () => {
+  const ico = await fetch(base + "/favicon.ico");
+  assert.equal(ico.status, 200);
+  assert.equal(ico.headers.get("content-type"), "image/x-icon");
+  const png = await fetch(base + "/icon.png");
+  assert.equal(png.headers.get("content-type"), "image/png");
+  assert.match(await (await fetch(base + "/")).text(), /rel="icon" href="\/favicon.ico"/);
+});

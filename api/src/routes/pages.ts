@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
 import type { Config } from "../config.js";
 import { DASHBOARD_JS } from "./dashboard-js.js";
+import { FAVICON_ICO, ICON_PNG } from "../icons.js";
 
 const SECURITY_HEADERS = {
   "Cache-Control": "no-store",
@@ -21,6 +22,7 @@ button,input,select{font:inherit}
 
 function landingHtml(mode: string, dashHost: string) {
   return `<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/icon.png" type="image/png"><link rel="apple-touch-icon" href="/icon.png">
 <title>Migimo API</title><style>${BASE_CSS}
 main{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center}
 .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#16A34A;margin-right:8px;vertical-align:middle}
@@ -36,6 +38,7 @@ p{margin:0;color:var(--abu)}
 }
 
 const DASHBOARD_HTML = `<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/icon.png" type="image/png"><link rel="apple-touch-icon" href="/icon.png">
 <title>Raksa · Dashboard Migimo</title><style>${BASE_CSS}
 header{background:#fff;border-bottom:1px solid var(--garis);position:sticky;top:0;z-index:5}
 .bar{max-width:1200px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
@@ -172,6 +175,13 @@ export function pageRoutes(app: FastifyInstance, deps: { cfg: Config }) {
     // Dashboard punya alamat sendiri (mis. raksa.migimo.id); alamat lama dialihkan ke sana.
     if (dashHost && !isDashHost(req.hostname)) return reply.redirect(`https://${dashHost}/`, 301);
     return sendDashboard(reply);
+  });
+  const ICON_CACHE = "public, max-age=86400";
+  app.get("/favicon.ico", async (_req, reply) => {
+    reply.header("Cache-Control", ICON_CACHE).type("image/x-icon").send(FAVICON_ICO);
+  });
+  app.get("/icon.png", async (_req, reply) => {
+    reply.header("Cache-Control", ICON_CACHE).type("image/png").send(ICON_PNG);
   });
   app.get("/dashboard.js", async (_req, reply) => {
     reply.headers(SECURITY_HEADERS).type("application/javascript; charset=utf-8").send(DASHBOARD_JS);
