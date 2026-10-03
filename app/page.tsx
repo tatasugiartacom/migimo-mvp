@@ -318,7 +318,7 @@ export default function Beranda() {
       <footer className={`${wadah} pb-10`}>
         <div className="flex flex-col gap-14 overflow-hidden rounded-[40px] bg-hijau-tua px-12 pt-24 pb-12 text-white max-sm:px-6 max-sm:pt-16">
           <div className="flex flex-col items-center gap-10 text-center">
-            <div className="text-[clamp(48px,8.4vw,132px)] leading-[1.08] font-extrabold tracking-[-0.045em]">
+            <div className="font-caveat text-[clamp(60px,10vw,156px)] leading-[1.05] font-bold">
               Berangkat
               <Bulatan />
               Migran,
@@ -395,7 +395,7 @@ export default function Beranda() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5 text-[13px] leading-[1.6] text-[#A9B99B]">
+          <div className="mx-auto flex max-w-[860px] flex-col gap-1.5 text-center text-[13px] leading-[1.6] text-[#A9B99B]">
             <div>
               Migimo dikelola oleh PT Niaga Teknologi Indonesia sebagai penyedia platform. Transaksi pembayaran diproses
               oleh [mitra pembayaran berizin Bank Indonesia]. Kurs dan bagi hasil di halaman ini adalah ilustrasi.

@@ -9,6 +9,7 @@
   --color-abu: #4A5144;
   --color-garis: #E7E4DC;
   --font-sans: var(--font-jakarta), system-ui, sans-serif;
+  --font-caveat: var(--font-caveat-src), cursive;
 }
 
 @layer base {

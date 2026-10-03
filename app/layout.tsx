@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Caveat, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -9,16 +9,22 @@ const jakarta = Plus_Jakarta_Sans({
   display: "swap",
 });
 
+const caveat = Caveat({
+  subsets: ["latin"],
+  weight: ["700"],
+  variable: "--font-caveat-src",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Migimo — kirim uang ke Indonesia lewat WhatsApp",
+  title: "Migimo - Mudah dan Untung",
   description:
     "Kirim uang ke Indonesia semudah chat. Bayar dengan QRIS Cross Border, dan separuh keuntungan kiriman kembali ke kamu.",
-  icons: { icon: "/icon.svg" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={jakarta.variable}>
+    <html lang="id" className={`${jakarta.variable} ${caveat.variable}`}>
       <body className="font-sans antialiased">{children}</body>
     </html>
   );
