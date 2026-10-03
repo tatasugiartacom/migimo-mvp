@@ -47,9 +47,9 @@ export default function Beranda() {
           </a>
           <nav className="flex items-center gap-x-7">
             {[
-              ["Kirim uang", "#negara"],
-              ["Kurs hari ini", "#kirim"],
-              ["Tentang Migimo", "#cerita"],
+              ["Kirim Uang", "#kirim"],
+              ["Cara", "#negara"],
+              ["Tentang", "#cerita"],
             ].map(([teks, href]) => (
               <a
                 key={teks}
