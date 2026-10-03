@@ -330,8 +330,8 @@ export default function Beranda() {
       </section>
 
       {/* Footer */}
-      <footer className="mt-10 border-t border-garis">
-        <div className={`${wadah} flex flex-wrap items-center justify-between gap-x-10 gap-y-6 py-10`}>
+      <footer className="mt-10">
+        <div className={`${wadah} flex flex-wrap items-center justify-between gap-x-10 gap-y-6 pt-10 pb-8`}>
           <a href="/" aria-label="Migimo beranda" className="flex">
             <LogoMigimo />
           </a>
@@ -353,15 +353,15 @@ export default function Beranda() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Migimo di ${nama}`}
-                className="flex size-11 items-center justify-center rounded-xl border border-garis text-teks hover:border-hijau hover:text-hijau"
+                className="flex size-11 items-center justify-center rounded-xl bg-panel text-teks hover:bg-[#E6E2D8] hover:text-hijau"
               >
                 {ikon}
               </a>
             ))}
           </div>
         </div>
-        <div className="border-t border-garis">
-          <div className={`${wadah} flex flex-col gap-1.5 py-8 text-center text-[13px] leading-[1.6] text-[#5C6356]`}>
+        <div>
+          <div className={`${wadah} flex flex-col gap-1.5 pt-2 pb-10 text-center text-[13px] leading-[1.6] text-[#5C6356]`}>
             <div className="mx-auto max-w-[860px]">
               Migimo dikelola oleh PT Niaga Teknologi Indonesia sebagai penyedia platform. Transaksi pembayaran diproses
               oleh [mitra pembayaran berizin Bank Indonesia]. Kurs dan bagi hasil di halaman ini adalah ilustrasi.
