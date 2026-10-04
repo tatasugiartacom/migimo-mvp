@@ -37,10 +37,11 @@ export function uatRoutes(
     r.get("/admin/mti/check", async () => {
       const m = cfg.mti;
       const masalah: string[] = [];
-      if (!/^\S{15}$/.test(m.merchantId))
-        masalah.push(`MTI_MERCHANT_ID harus 15 karakter tanpa spasi (sekarang ${m.merchantId.length} karakter).`);
-      if (!/^\S{8}$/.test(m.terminalId))
-        masalah.push(`MTI_TERMINAL_ID harus 8 karakter tanpa spasi (sekarang ${m.terminalId.length} karakter).`);
+      // Panjang mengikuti email kredensial Yokke, jadi yang dicek hanya isi dan spasi/karakter tersembunyi.
+      if (!/^\d+$/.test(m.merchantId))
+        masalah.push(`MTI_MERCHANT_ID harus berisi angka saja tanpa spasi (sekarang "${m.merchantId}").`);
+      if (!/^\d+$/.test(m.terminalId))
+        masalah.push(`MTI_TERMINAL_ID harus berisi angka saja tanpa spasi (sekarang "${m.terminalId}").`);
       if (m.mode === "live" && !m.baseUrl) masalah.push("MTI_BASE_URL belum diisi.");
       return { ok: masalah.length === 0, masalah };
     });

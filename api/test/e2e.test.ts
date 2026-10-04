@@ -199,8 +199,8 @@ test("favicon tersedia di semua host API", async () => {
   assert.match(await (await fetch(base + "/")).text(), /rel="icon" href="\/favicon.ico"/);
 });
 
-test("MID/TID salah format: peringatan muncul dan Jalankan semua tidak error 500", async () => {
-  const port = PORT + 1;
+test("MID/TID mengikuti kredensial Yokke (9 dan 15 digit): skenario 1 dan 2 lulus", async () => {
+  const port = PORT + 2;
   const cfg = loadConfig({
     MTI_MODE: "simulator",
     ADMIN_TOKEN: ADMIN,
@@ -213,16 +213,40 @@ test("MID/TID salah format: peringatan muncul dan Jalankan semua tidak error 500
   const { app } = buildApp({ cfg, db, sim, logger: false });
   await app.listen({ port, host: "127.0.0.1" });
   try {
+    const h = { Authorization: `Bearer ${ADMIN}`, "Content-Type": "application/json" };
+    const check = await (await fetch(`http://127.0.0.1:${port}/admin/mti/check`, { headers: h })).json();
+    assert.equal(check.ok, true);
+    const out = await (await fetch(`http://127.0.0.1:${port}/admin/uat/run-all`, { method: "POST", headers: h })).json();
+    const fails = out.filter((x: any) => x.status !== "pass" && x.status !== "needs_clarification");
+    assert.deepEqual(fails.map((x: any) => x.no), []);
+    assert.equal(out[0].responseCode, "2004700");
+  } finally {
+    await app.close();
+  }
+});
+
+test("MID/TID berisi spasi: peringatan muncul dan Jalankan semua tidak error 500", async () => {
+  const port = PORT + 1;
+  const cfg = loadConfig({
+    MTI_MODE: "simulator",
+    ADMIN_TOKEN: ADMIN,
+    DATABASE_URL: DB_URL,
+    MTI_TIMEOUT_MS: "1000",
+    MTI_MERCHANT_ID: "463763743 ",
+    MTI_TERMINAL_ID: "123873439497343",
+  } as any);
+  const sim = setupSimulator(cfg, port);
+  const { app } = buildApp({ cfg, db, sim, logger: false });
+  await app.listen({ port, host: "127.0.0.1" });
+  try {
     const h = { Authorization: `Bearer ${ADMIN}` };
     const check = await (await fetch(`http://127.0.0.1:${port}/admin/mti/check`, { headers: h })).json();
     assert.equal(check.ok, false);
-    assert.equal(check.masalah.length, 2);
+    assert.equal(check.masalah.length, 1);
     const r = await fetch(`http://127.0.0.1:${port}/admin/uat/run-all`, { method: "POST", headers: h });
     assert.equal(r.status, 200);
     const out = await r.json();
     assert.equal(out.length, 38);
-    assert.equal(out[0].status, "fail");
-    assert.ok(out.some((x: any) => /Error: QR untuk transaksi dibayar gagal dibuat \(4004701/.test(x.note ?? "")));
   } finally {
     await app.close();
   }

@@ -195,10 +195,11 @@ export class MtiSimulator {
 
   private validateGenerate(b: any) {
     if (!b || typeof b !== "object") return this.err(400, "47", "00", "Bad Request");
+    // Panjang MID/TID mengikuti kredensial yang diterbitkan Yokke (bisa berbeda dari contoh di dokumen API).
     for (const [f, len] of [
       ["partnerReferenceNo", 20],
-      ["merchantId", 15],
-      ["terminalId", 8],
+      ["merchantId", this.o.merchantId.length],
+      ["terminalId", this.o.terminalId.length],
     ] as const) {
       if (typeof b[f] !== "string" || b[f].length !== len) return this.err(400, "47", "01", `Invalid Field Format ${f}`);
     }
