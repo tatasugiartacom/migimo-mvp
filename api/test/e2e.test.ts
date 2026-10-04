@@ -220,6 +220,9 @@ test("MID/TID mengikuti kredensial Yokke (9 dan 15 digit): skenario 1 dan 2 lulu
     const fails = out.filter((x: any) => x.status !== "pass" && x.status !== "needs_clarification");
     assert.deepEqual(fails.map((x: any) => x.no), []);
     assert.equal(out[0].responseCode, "2004700");
+    // MID/TID salah dengan panjang yang sama: ditolak sebagai tidak dikenal, bukan format salah.
+    assert.equal(out[3].responseCode, "4044708");
+    assert.equal(out[4].responseCode, "4044717");
   } finally {
     await app.close();
   }

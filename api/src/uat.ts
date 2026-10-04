@@ -148,6 +148,9 @@ export class UatRunner {
     const p = this.payments;
     const mid = this.cfg.mti.merchantId;
     const tid = this.cfg.mti.terminalId;
+    // MID/TID salah tapi panjangnya sama, supaya yang diuji "tidak dikenal" (40447xx08/17), bukan "format salah".
+    const badMid = mid.replace(/\d/g, "9") === mid ? mid.replace(/\d/g, "8") : mid.replace(/\d/g, "9");
+    const badTid = tid.replace(/\d/g, "9") === tid ? tid.replace(/\d/g, "8") : tid.replace(/\d/g, "9");
     let res: UatResult;
     try {
       switch (no) {
@@ -168,7 +171,7 @@ export class UatRunner {
         }
         case 4:
         case 5: {
-          const overrides = no === 4 ? { merchantId: "999999999999999" } : { terminalId: "99999999" };
+          const overrides = no === 4 ? { merchantId: badMid } : { terminalId: badTid };
           const { order, result } = await p.createQr({ amount: this.amount, scenario: s, overrides });
           res = this.fill(no, result, order, ok(result));
           break;
@@ -228,8 +231,8 @@ export class UatRunner {
         case 16: {
           const { order } = await p.createQr({ amount: this.amount, scenario: s });
           const overrides = {
-            12: { merchantId: "999999999999999" },
-            13: { terminalId: "99999999" },
+            12: { merchantId: badMid },
+            13: { terminalId: badTid },
             14: { originalReferenceNo: "000000000000" },
             15: { originalExternalId: "000000000000000" },
             16: { originalTransactionDate: "20200101" },
@@ -254,8 +257,8 @@ export class UatRunner {
         case 25: {
           const order = await this.paidOrder(s, opts.orderId);
           const overrides = {
-            20: { merchantId: "999999999999999" },
-            21: { terminalId: "99999999" },
+            20: { merchantId: badMid },
+            21: { terminalId: badTid },
             22: { originalReferenceNo: "000000000000" },
             23: { originalExternalId: "000000000000000" },
             24: { originalTransactionDate: "20200101" },
