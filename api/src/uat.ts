@@ -90,8 +90,13 @@ export class UatRunner {
       throw new NeedsPayment(`Pesanan #${orderId} belum berstatus dibayar`);
     }
     if (this.sim) {
-      const { order } = await this.payments.createQr({ amount: this.amount, scenario });
-      await this.sim.pay(order.reference_no!, { scenario });
+      const { order, result } = await this.payments.createQr({ amount: this.amount, scenario });
+      if (!result.ok || !order.reference_no) {
+        throw new Error(
+          `QR untuk transaksi dibayar gagal dibuat (${result.responseCode ?? result.error ?? "tanpa kode"}${result.body?.responseMessage ? ": " + result.body.responseMessage : ""})`,
+        );
+      }
+      await this.sim.pay(order.reference_no, { scenario });
       return (await this.payments.getOrder(order.id))!;
     }
     const { rows } = await this.db.query<Order>(
@@ -313,8 +318,9 @@ export class UatRunner {
           throw Object.assign(new Error("Nomor skenario 1–38"), { statusCode: 400 });
       }
     } catch (e) {
+      // Satu skenario yang error tidak boleh menghentikan "Jalankan semua": catat sebagai tidak lulus.
       if (e instanceof NeedsPayment) res = this.special(no, "needs_payment", e.message);
-      else throw e;
+      else res = this.special(no, "fail", `Error: ${(e as Error).message}`);
     }
     await this.db.query(
       `INSERT INTO uat_results (no, run_at, result) VALUES ($1, now(), $2)

@@ -130,6 +130,7 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
         <button class="btn sec" id="dlLogs">Unduh log lengkap (CSV)</button>
       </div>
       <p class="muted" id="uatNote"></p>
+      <div id="mtiCheck" class="muted" style="color:var(--merah)" hidden></div>
     </div>
     <div class="card tbl"><table><thead><tr><th>No</th><th>Kelompok</th><th>Skenario</th><th>Diharapkan</th><th>Hasil</th><th>Response Code</th><th>Catatan</th><th></th></tr></thead><tbody id="uatBody"></tbody></table></div>
   </section>

@@ -198,3 +198,32 @@ test("favicon tersedia di semua host API", async () => {
   assert.equal(png.headers.get("content-type"), "image/png");
   assert.match(await (await fetch(base + "/")).text(), /rel="icon" href="\/favicon.ico"/);
 });
+
+test("MID/TID salah format: peringatan muncul dan Jalankan semua tidak error 500", async () => {
+  const port = PORT + 1;
+  const cfg = loadConfig({
+    MTI_MODE: "simulator",
+    ADMIN_TOKEN: ADMIN,
+    DATABASE_URL: DB_URL,
+    MTI_TIMEOUT_MS: "1000",
+    MTI_MERCHANT_ID: "463763743",
+    MTI_TERMINAL_ID: "123873439497343",
+  } as any);
+  const sim = setupSimulator(cfg, port);
+  const { app } = buildApp({ cfg, db, sim, logger: false });
+  await app.listen({ port, host: "127.0.0.1" });
+  try {
+    const h = { Authorization: `Bearer ${ADMIN}` };
+    const check = await (await fetch(`http://127.0.0.1:${port}/admin/mti/check`, { headers: h })).json();
+    assert.equal(check.ok, false);
+    assert.equal(check.masalah.length, 2);
+    const r = await fetch(`http://127.0.0.1:${port}/admin/uat/run-all`, { method: "POST", headers: h });
+    assert.equal(r.status, 200);
+    const out = await r.json();
+    assert.equal(out.length, 38);
+    assert.equal(out[0].status, "fail");
+    assert.ok(out.some((x: any) => /Error: QR untuk transaksi dibayar gagal dibuat \(4004701/.test(x.note ?? "")));
+  } finally {
+    await app.close();
+  }
+});

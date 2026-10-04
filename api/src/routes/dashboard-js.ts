@@ -177,6 +177,11 @@ export const DASHBOARD_JS = String.raw`
   // ---------- UAT ----------
   var cases = [];
   function loadUat() {
+    api("/admin/mti/check").then(function (c) {
+      var el = $("mtiCheck");
+      el.hidden = c.ok;
+      el.innerHTML = c.ok ? "" : "<strong>Periksa Railway Variables:</strong><br>" + c.masalah.map(esc).join("<br>");
+    }).catch(function () {});
     return Promise.all([cases.length ? cases : api("/admin/uat/cases"), api("/admin/uat/results")]).then(function (res) {
       cases = res[0];
       var byNo = {}; res[1].forEach(function (r) { byNo[r.no] = r; });
