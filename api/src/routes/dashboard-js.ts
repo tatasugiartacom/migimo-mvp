@@ -246,6 +246,15 @@ export const DASHBOARD_JS = String.raw`
     api("/admin/uat/run-all", {}).then(function () { toast("Selesai menjalankan 38 skenario"); return loadUat(); })
       .catch(function (er) { toast(er.message); }).then(function () { b.textContent = "Jalankan semua"; busy(b, false); });
   });
+  $("mtiPing").addEventListener("click", function () {
+    var b = $("mtiPing"); busy(b, true); b.textContent = "Menghubungi MTI…";
+    api("/admin/mti/ping", {}).then(function (r) {
+      openDialog("<h3>Tes koneksi MTI " + (r.ok ? '<span class="b b-ok">Berhasil</span>' : '<span class="b b-bad">Gagal</span>') + "</h3><p>" + esc(r.pesan) + "</p>" +
+        (r.ok ? "" : "<table>" + [["URL", r.url], ["HTTP", r.httpStatus], ["Response code", r.responseCode], ["Error", r.error]]
+          .map(function (x) { return "<tr><th>" + esc(x[0]) + '</th><td class="mono">' + esc(x[1] == null ? "-" : x[1]) + "</td></tr>"; }).join("") +
+          "</table><h4>Response body</h4><pre>" + esc(pretty(r.responseBody)) + "</pre>"));
+    }).catch(function (er) { toast(er.message); }).then(function () { b.textContent = "Tes koneksi MTI"; busy(b, false); });
+  });
   $("dlUat").addEventListener("click", function () { download("/admin/uat/export.csv", "uat-qris-snap-mpm.csv"); });
   $("dlLogs").addEventListener("click", function () { download("/admin/logs.csv", "mti-logs.csv"); });
 
@@ -278,7 +287,7 @@ export const DASHBOARD_JS = String.raw`
   // ---------- Aktivitas ----------
   var ACT = {
     "/admin/qr": "Buat QRIS", "/admin/orders/:id/inquiry": "Cek status", "/admin/orders/:id/refund": "Refund",
-    "/admin/uat/run/:no": "Jalankan skenario UAT", "/admin/sit/run": "Jalankan alur SIT", "/admin/uat/run-all": "Jalankan semua UAT",
+    "/admin/uat/run/:no": "Jalankan skenario UAT", "/admin/sit/run": "Jalankan alur SIT", "/admin/mti/ping": "Tes koneksi MTI", "/admin/uat/run-all": "Jalankan semua UAT",
     "/admin/sim/pay/:orderId": "Bayar (simulasi)", "/admin/wa/transfers/:id/dikirim": "Tandai kiriman disalurkan",
     "/admin/wa/contacts/:waId/send": "Balas WhatsApp", "/admin/wa/contacts/:waId/handoff": "Ubah status bot",
     "/admin/wa/uji": "Uji coba bot", "/admin/wa/uji/reset": "Mulai ulang uji bot", login: "Masuk", logout: "Keluar", login_ditolak: "Login ditolak"

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import type { MtiClient } from "../mti/client.js";
 import { latestSitOrder, runSit, sitRows, sitWorkbook } from "../sit.js";
 import { audit, requireAdmin } from "../auth.js";
 import type { Db } from "../db.js";
@@ -11,9 +12,9 @@ import { csv } from "./admin.js";
 /** Menjalankan dan mengekspor skenario UAT (login Google atau header Authorization: Bearer ADMIN_TOKEN). */
 export function uatRoutes(
   app: FastifyInstance,
-  deps: { cfg: Config; db: Db; payments: Payments; uat: UatRunner; sim: MtiSimulator | null },
+  deps: { cfg: Config; db: Db; payments: Payments; uat: UatRunner; sim: MtiSimulator | null; mti: MtiClient },
 ) {
-  const { cfg, db, payments, uat, sim } = deps;
+  const { cfg, db, payments, uat, sim, mti } = deps;
 
   app.register(async (r) => {
     r.addHook("onRequest", requireAdmin(cfg));
@@ -65,6 +66,27 @@ export function uatRoutes(
         .type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         .header("Content-Disposition", `attachment; filename="SIT-QR-MPM-SNAP-Migimo-pesanan-${orderId}.xlsx"`)
         .send(buf);
+    });
+
+    /** Tes koneksi: minta satu token baru ke MTI (Get Token) dan kembalikan hasilnya. */
+    r.post("/admin/mti/ping", async () => {
+      mti.resetToken();
+      try {
+        await mti.getToken({ scenario: "TES-KONEKSI" });
+        return { ok: true, pesan: "Token MTI berhasil didapat. Koneksi dan tanda tangan RSA diterima." };
+      } catch (e) {
+        const { rows } = await db.query("SELECT * FROM mti_logs WHERE api = 'token' ORDER BY id DESC LIMIT 1");
+        const l = rows[0];
+        return {
+          ok: false,
+          pesan: (e as Error).message,
+          httpStatus: l?.http_status ?? null,
+          responseCode: l?.response_code ?? null,
+          responseBody: l?.response_body ?? null,
+          error: l?.error ?? null,
+          url: l?.url ?? null,
+        };
+      }
     });
 
     r.post("/admin/uat/run-all", async () => {

@@ -288,3 +288,8 @@ test("SIT: alur 4 skenario dan ekspor Excel dengan kolom dokumen Yokke", async (
   assert.equal(ws.getCell("F2").value, "2004700");
   assert.equal(ws.getCell("K5").value, "PASS");
 });
+
+test("tes koneksi MTI: token berhasil di simulator", async () => {
+  const r = await (await api("/admin/mti/ping", {})).json();
+  assert.equal(r.ok, true);
+});

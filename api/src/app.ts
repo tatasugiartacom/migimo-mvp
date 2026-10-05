@@ -38,7 +38,7 @@ export function buildApp(deps: { cfg: Config; db: Db; fetchImpl?: typeof fetch; 
   notifyRoutes(app, { cfg, mti, payments });
   adminRoutes(app, { cfg, db, payments });
   const uat = new UatRunner(cfg, db, payments, deps.sim ?? null);
-  uatRoutes(app, { cfg, db, payments, uat, sim: deps.sim ?? null });
+  uatRoutes(app, { cfg, db, payments, uat, sim: deps.sim ?? null, mti });
   deps.sim?.register(app);
 
   const cloud = new WhatsAppCloud(cfg.wa, deps.waFetch);

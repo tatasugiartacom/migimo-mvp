@@ -140,6 +140,7 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
         <button class="btn" id="runAll">Jalankan semua</button>
         <button class="btn sec" id="dlUat">Unduh hasil (CSV)</button>
         <button class="btn sec" id="dlLogs">Unduh log lengkap (CSV)</button>
+        <button class="btn sec" id="mtiPing">Tes koneksi MTI</button>
       </div>
       <p class="muted" id="uatNote"></p>
       <div id="mtiCheck" class="muted" style="color:var(--merah)" hidden></div>
