@@ -99,7 +99,7 @@ export class MtiSimulator {
       this.tokens.set(token, Date.now() + 900_000);
       reply
         .headers({ "X-TIMESTAMP": timestampWib(), "X-CLIENT-KEY": this.o.clientKey })
-        .send({ responseCode: "2007300", responseMessage: "Successful", accessToken: token, tokenType: "Bearer", expiresIn: "900" });
+        .send({ responseCode: "2007300", responseMessage: "Successful", accessToken: token, tokenType: "bearer", expiredIn: "900" });
     });
 
     app.post(`${prefix}/v2.0/qr/qr-mpm-generate`, async (req, reply) => {

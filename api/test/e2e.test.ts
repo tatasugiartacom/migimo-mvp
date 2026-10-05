@@ -292,4 +292,8 @@ test("SIT: alur 4 skenario dan ekspor Excel dengan kolom dokumen Yokke", async (
 test("tes koneksi MTI: token berhasil di simulator", async () => {
   const r = await (await api("/admin/mti/ping", {})).json();
   assert.equal(r.ok, true);
+  // Access token tidak tersimpan utuh di log.
+  const logs = await (await api("/admin/logs?limit=200")).json();
+  const t = logs.find((l: any) => l.api === "token" && l.scenario === "TES-KONEKSI");
+  assert.match(JSON.parse(t.response_body).accessToken, /…$/);
 });

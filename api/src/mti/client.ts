@@ -127,6 +127,11 @@ export class MtiClient {
       parsed = null;
     }
     const responseCode = parsed?.responseCode ?? null;
+    // Jangan simpan access token utuh di log (log bisa diunduh sebagai CSV/Excel).
+    const logBody =
+      api === "token" && parsed?.accessToken
+        ? JSON.stringify({ ...parsed, accessToken: String(parsed.accessToken).slice(0, 12) + "…" })
+        : text;
     const logId = await this.log({
       direction: "out",
       api,
@@ -138,7 +143,7 @@ export class MtiClient {
       requestBody: body,
       httpStatus,
       responseHeaders: resHeaders,
-      responseBody: text,
+      responseBody: logBody,
       responseCode,
       durationMs: Date.now() - started,
       error,
@@ -174,7 +179,8 @@ export class MtiClient {
       throw new Error(`Gagal mendapatkan token MTI (${r.responseCode ?? r.httpStatus ?? r.error})`);
     }
     // Token berlaku 1 jam (info Yokke); dipakai ulang maksimal 50 menit agar aman.
-    const ttl = Math.min(Number(r.body.expiresIn ?? 3600) * 1000, 3600_000);
+    // Yokke mengirim "expiredIn" (detik), mis. "900"; dokumen menyebut "expiresIn".
+    const ttl = Math.min(Number(r.body.expiresIn ?? r.body.expiredIn ?? 900) * 1000, 3600_000);
     this.token = { value: r.body.accessToken, expiresAt: Date.now() + Math.min(ttl - 60_000, 50 * 60_000) };
     return this.token.value;
   }
