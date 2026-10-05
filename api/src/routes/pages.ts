@@ -118,6 +118,17 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
         <button class="btn" type="submit">Buat QRIS</button>
         <button class="btn sec" type="button" id="refreshOrders">Muat ulang</button>
       </form>
+      <details style="margin-top:12px">
+        <summary class="muted" style="cursor:pointer">Opsi lanjutan (uji sandbox): ganti MID, TID, partnerReferenceNo, X-EXTERNAL-ID</summary>
+        <div class="row" style="margin-top:10px">
+          <label>MID<input id="ovMid" placeholder="bawaan"></label>
+          <label>TID<input id="ovTid" placeholder="bawaan"></label>
+          <label>partnerReferenceNo<input id="ovRef" placeholder="otomatis"></label>
+          <label>X-EXTERNAL-ID<input id="ovExt" placeholder="otomatis"></label>
+          <button class="btn sec" type="button" id="ovPostman">Isi contoh Postman</button>
+        </div>
+        <p class="muted">Kosongkan untuk memakai nilai bawaan. "Isi contoh Postman" mengisi nilai persis seperti collection Sandbox Yokke (nominal 1000, biaya 1000).</p>
+      </details>
     </div>
     <div class="card tbl"><table><thead><tr><th>#</th><th>Waktu (WIB)</th><th>Nominal</th><th>Status</th><th>Reference No</th><th>Skenario</th><th>Aksi</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
   </section>

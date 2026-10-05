@@ -167,12 +167,24 @@ export const DASHBOARD_JS = String.raw`
     var btn = e.submitter; busy(btn, true);
     var body = { amount: Number($("qrAmount").value) };
     if ($("qrFee").value !== "") body.feeAmount = Number($("qrFee").value);
+    var ov = {};
+    if ($("ovMid").value.trim()) ov.merchantId = $("ovMid").value.trim();
+    if ($("ovTid").value.trim()) ov.terminalId = $("ovTid").value.trim();
+    if ($("ovRef").value.trim()) ov.partnerReferenceNo = $("ovRef").value.trim();
+    if ($("ovExt").value.trim()) ov.externalId = $("ovExt").value.trim();
+    if (Object.keys(ov).length) { body.overrides = ov; body.scenario = "UJI-SANDBOX"; }
     api("/admin/qr", body).then(function (r) {
       toast(r.result.ok ? "QRIS dibuat (Ref " + r.order.reference_no + ")" : "Gagal: " + (r.result.body && r.result.body.responseMessage || r.result.responseCode || r.result.error), 5000);
       return loadOrders();
     }).catch(function (er) { toast(er.message); }).then(function () { busy(btn, false); });
   });
   $("refreshOrders").addEventListener("click", loadOrders);
+  $("ovPostman").addEventListener("click", function () {
+    $("qrAmount").value = "1000"; $("qrFee").value = "1000";
+    $("ovMid").value = "463763743"; $("ovTid").value = "12387341";
+    $("ovRef").value = "230218123798002"; $("ovExt").value = "866330434635474";
+    toast("Nilai contoh Postman sudah diisi. Klik Buat QRIS.");
+  });
 
   // ---------- UAT ----------
   var cases = [];
