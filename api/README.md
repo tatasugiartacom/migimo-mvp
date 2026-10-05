@@ -28,6 +28,8 @@ sesuai *QR Payment API Documentation v1.0.11*. Berjalan di Railway (Singapura) d
 | `MTI_CHANNEL_ID` | `CHANNEL-ID` (konfirmasi ke Yokke) |
 | `MTI_PRIVATE_KEY` | Kunci privat RSA Migimo (PEM atau base64) untuk Get Token |
 | `MTI_PUBLIC_KEY` | Kunci publik MTI untuk verifikasi notify |
+| `MTI_PLATFORM` | Header `X-PLATFORM` (bawaan `PORTAL`, sesuai Postman sandbox Yokke; kosongkan untuk tidak mengirim) |
+| `MTI_SIGN_FULL_PATH` | `true` bila tanda tangan HMAC harus memakai path lengkap termasuk prefix base URL |
 | `MTI_NOTIFY_VERIFY` | `strict` (bawaan) atau `log` |
 | `MTI_TIMEOUT_MS` | Batas waktu panggilan ke MTI (bawaan 30000) |
 | `ANTHROPIC_API_KEY` | Kunci API Claude untuk bot WhatsApp (kosong = bot hanya membalas "tim akan membalas") |
@@ -52,6 +54,15 @@ sesuai *QR Payment API Documentation v1.0.11*. Berjalan di Railway (Singapura) d
   - `GET /admin/uat/cases`, `POST /admin/uat/run/:no`, `POST /admin/uat/run-all`, `GET /admin/uat/results`, `GET /admin/uat/export.csv`
   - `GET /admin/keys/public`: kunci publik Migimo untuk didaftarkan ke Yokke
   - `POST /admin/sim/pay/:orderId` (simulator saja): meniru pembayaran
+
+## SIT sandbox Yokke
+
+- Base URL (Postman "Sandbox QRIS MPM"): `https://tst.yokke.co.id:8280/qrissnapmpm/1.0.11`
+- Token berlaku 1 jam; dipakai ulang maksimal 50 menit.
+- Notify dicocokkan ke QR Generate lewat `originalExternalId` = X-EXTERNAL-ID saat generate.
+- Inquiry: `originalReferenceNo` = referenceNo QR Generate, `originalTransactionDate` = tanggal bayar.
+- Refund: `originalReferenceNo` dan `originalApprovalCode` dari Payment Notify.
+- Dashboard → UAT → kartu SIT: jalankan alur dan unduh Excel (`GET /admin/sit/export.xlsx?orderId=`).
 
 ## WhatsApp AI
 

@@ -32,7 +32,11 @@ export async function migrate(db: Db) {
       created_at            TIMESTAMPTZ NOT NULL DEFAULT now(),
       updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
     );
+    -- Dari Payment Notify: reference number pembayaran dan tanggal bayar (dipakai inquiry/refund).
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS paid_reference_no VARCHAR(32);
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS paid_transaction_date CHAR(8);
     CREATE INDEX IF NOT EXISTS orders_reference_no_idx ON orders (reference_no);
+    CREATE INDEX IF NOT EXISTS orders_external_id_idx ON orders (external_id);
     CREATE INDEX IF NOT EXISTS orders_partner_ref_idx ON orders (partner_reference_no);
 
     CREATE TABLE IF NOT EXISTS mti_logs (

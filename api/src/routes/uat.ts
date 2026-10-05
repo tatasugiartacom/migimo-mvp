@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { latestSitOrder, runSit, sitRows, sitWorkbook } from "../sit.js";
 import { audit, requireAdmin } from "../auth.js";
 import type { Db } from "../db.js";
 import type { Config } from "../config.js";
@@ -44,6 +45,26 @@ export function uatRoutes(
         masalah.push(`MTI_TERMINAL_ID harus berisi angka saja tanpa spasi (sekarang "${m.terminalId}").`);
       if (m.mode === "live" && !m.baseUrl) masalah.push("MTI_BASE_URL belum diisi.");
       return { ok: masalah.length === 0, masalah };
+    });
+
+    // ---------- SIT (dokumen "SIT-QR MPM SNAP- API Test Review-Standard ver. 1.2") ----------
+    const sitOrder = async (q: any) => (q?.orderId ? Number(q.orderId) : await latestSitOrder(db));
+
+    r.get("/admin/sit/rows", async (req) => {
+      const orderId = await sitOrder(req.query);
+      return { orderId, rows: orderId ? await sitRows(db, orderId) : [] };
+    });
+
+    r.post("/admin/sit/run", async () => runSit(payments, sim));
+
+    r.get("/admin/sit/export.xlsx", async (req, reply) => {
+      const orderId = await sitOrder(req.query);
+      if (!orderId) return reply.code(404).send({ error: "Belum ada pesanan untuk SIT" });
+      const buf = await sitWorkbook(await sitRows(db, orderId), orderId);
+      reply
+        .type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        .header("Content-Disposition", `attachment; filename="SIT-QR-MPM-SNAP-Migimo-pesanan-${orderId}.xlsx"`)
+        .send(buf);
     });
 
     r.post("/admin/uat/run-all", async () => {

@@ -123,6 +123,18 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
   </section>
   <section data-panel="uat" hidden>
     <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px"><strong>SIT – dokumen Yokke (4 skenario)</strong></div>
+      <p class="muted" style="margin-top:0">Alur: Generate → bayar → Inquiry → Refund, plus Payment Notify dari MTI. Hasil diambil dari log satu pesanan dan diekspor ke Excel dengan kolom yang sama seperti file SIT Yokke.</p>
+      <div class="row">
+        <button class="btn" id="sitRun">Jalankan alur SIT</button>
+        <label>Pesanan #<input id="sitOrder" inputmode="numeric" style="width:110px" placeholder="terbaru"></label>
+        <button class="btn sec" id="sitLoad">Tampilkan</button>
+        <button class="btn sec" id="sitDl">Unduh Excel SIT</button>
+      </div>
+      <p class="muted" id="sitNote"></p>
+      <div class="tbl"><table><thead><tr><th>No</th><th>Case</th><th>Response Code</th><th>External ID</th><th>Waktu (WIB)</th><th>Status</th></tr></thead><tbody id="sitBody"></tbody></table></div>
+    </div>
+    <div class="card">
       <div class="sum" id="uatSum"></div>
       <div class="row">
         <button class="btn" id="runAll">Jalankan semua</button>

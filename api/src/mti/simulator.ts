@@ -34,6 +34,10 @@ interface Trx {
   date: string;
   status: "03" | "00" | "04" | "06";
   approvalCode?: string;
+  /** Reference number pembayaran (dari notify). Menurut Yokke bisa berbeda dari referenceNo QR Generate. */
+  paymentRef?: string;
+  /** Tanggal pembayaran YYYYMMDD; dipakai sebagai originalTransactionDate pada inquiry/refund. */
+  paidDate?: string;
 }
 
 const DESC: Record<string, string> = { "00": "Success", "03": "Pending", "04": "Refunded", "06": "Failed", "07": "Not found" };
@@ -53,6 +57,7 @@ export class MtiSimulator {
   private externalIds = new Set<string>();
   private partnerRefs = new Set<string>();
   readonly trx = new Map<string, Trx>();
+  private byPayment = new Map<string, string>();
 
   constructor(private o: SimOptions) {}
 
@@ -135,13 +140,14 @@ export class MtiSimulator {
     app.post(`${prefix}/v2.0/qr/qr-mpm-query`, async (req, reply) => {
       const raw = (req as any).rawBody as string;
       const b = req.body as any;
-      const e = this.checkService("51", "/v2.0/qr/qr-mpm-query", req.headers, raw) ?? this.findTrx("51", b);
+      const e = this.checkService("51", "/v2.0/qr/qr-mpm-query", req.headers, raw) ?? this.findTrx("51", b, "query");
       if ("http" in e) return reply.code(e.http).send(e.body);
       const t = e.trx;
       reply.send({
         responseCode: "2005100",
         responseMessage: "Successful",
-        originalReferenceNo: t.referenceNo,
+        // Setelah dibayar, Yokke mengembalikan reference number pembayaran (bukan referenceNo QR Generate).
+        originalReferenceNo: t.paymentRef ?? t.referenceNo,
         originalExternalId: t.externalId,
         serviceCode: "51",
         latestTransactionStatus: t.status,
@@ -159,7 +165,7 @@ export class MtiSimulator {
     app.post(`${prefix}/v2.0/qr/qr-mpm-cancel`, async (req, reply) => {
       const raw = (req as any).rawBody as string;
       const b = req.body as any;
-      const e = this.checkService("77", "/v2.0/qr/qr-mpm-cancel", req.headers, raw) ?? this.findTrx("77", b);
+      const e = this.checkService("77", "/v2.0/qr/qr-mpm-cancel", req.headers, raw) ?? this.findTrx("77", b, "cancel");
       if ("http" in e) return reply.code(e.http).send(e.body);
       const t = e.trx;
       if (b.originalPartnerReferenceNo !== t.partnerReferenceNo) {
@@ -210,13 +216,16 @@ export class MtiSimulator {
     return null;
   }
 
-  private findTrx(svc: string, b: any): { trx: Trx } | { http: number; body: any } {
+  private findTrx(svc: string, b: any, mode: "query" | "cancel"): { trx: Trx } | { http: number; body: any } {
     if (b?.merchantId !== this.o.merchantId) return this.err(404, svc, "08", "Invalid Merchant");
     if (b?.additionalInfo?.terminalId !== this.o.terminalId) return this.err(404, svc, "17", "Terminal Invalid");
-    const t = this.trx.get(String(b?.originalReferenceNo ?? ""));
+    const ref = String(b?.originalReferenceNo ?? "");
+    const t = this.trx.get(ref) ?? this.trx.get(this.byPayment.get(ref) ?? "");
     if (!t) return this.err(404, svc, "01", "Transaction Not Found");
+    // Refund wajib memakai originalReferenceNo dari Payment Notify (info Yokke).
+    if (mode === "cancel" && t.paymentRef && ref !== t.paymentRef) return this.err(404, svc, "01", "Transaction Not Found");
     if (b.originalExternalId !== t.externalId) return this.err(404, svc, "18", "Inconsistent Request. originalExternalId");
-    if (b.additionalInfo?.originalTransactionDate !== t.date) {
+    if (b.additionalInfo?.originalTransactionDate !== (t.paidDate ?? t.date)) {
       return this.err(404, svc, "18", "Inconsistent Request. originalTransactionDate");
     }
     return { trx: t };
@@ -233,13 +242,20 @@ export class MtiSimulator {
     if (status === "00") {
       t.status = "00";
       t.approvalCode = t.approvalCode ?? String(randomInt(100000, 999999));
+      if (!t.paymentRef) {
+        t.paymentRef = digits(12);
+        t.paidDate = wibDate();
+        this.byPayment.set(t.paymentRef, t.referenceNo);
+      }
     } else {
       t.status = "06";
     }
     const results: { httpStatus: number; body: any }[] = [];
     for (let i = 0; i < (opts.times ?? 1); i++) {
       const body = minify({
-        originalReferenceNo: t.referenceNo,
+        originalReferenceNo: t.paymentRef ?? t.referenceNo,
+        // Penghubung ke QR Generate: X-EXTERNAL-ID saat generate (info Yokke).
+        originalExternalId: t.externalId,
         latestTransactionStatus: status,
         transactionStatusDesc: DESC[status],
         customerNumber: "1234123412341234",

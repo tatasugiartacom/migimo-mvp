@@ -157,7 +157,7 @@ export class MtiClient {
 
   /** 3.2 Get Authentication Token (token di-cache sampai 60 detik sebelum kedaluwarsa). */
   async getToken(opts: CallOpts = {}): Promise<string> {
-    if (this.token && Date.now() < this.token.expiresAt - 60_000) return this.token.value;
+    if (this.token && Date.now() < this.token.expiresAt) return this.token.value;
     const { clientKey, privateKey } = this.cfg.mti;
     if (!clientKey || !privateKey) throw new Error("MTI_CLIENT_KEY dan MTI_PRIVATE_KEY wajib diisi");
     const ts = timestampWib();
@@ -166,19 +166,45 @@ export class MtiClient {
       "X-TIMESTAMP": ts,
       "X-CLIENT-KEY": clientKey,
       "X-SIGNATURE": tokenSignature(privateKey, clientKey, ts),
+      ...this.platformHeader(),
     };
     const body = minify({ grantType: "client_credentials" });
     const r = await this.send("token", this.cfg.mti.paths.token, headers, body, opts, null);
     if (!r.ok || !r.body?.accessToken) {
       throw new Error(`Gagal mendapatkan token MTI (${r.responseCode ?? r.httpStatus ?? r.error})`);
     }
-    const ttl = Number(r.body.expiresIn ?? 900) * 1000;
-    this.token = { value: r.body.accessToken, expiresAt: Date.now() + ttl };
+    // Token berlaku 1 jam (info Yokke); dipakai ulang maksimal 50 menit agar aman.
+    const ttl = Math.min(Number(r.body.expiresIn ?? 3600) * 1000, 3600_000);
+    this.token = { value: r.body.accessToken, expiresAt: Date.now() + Math.min(ttl - 60_000, 50 * 60_000) };
     return this.token.value;
   }
 
   /** Panggilan layanan bertanda tangan HMAC (generate/query/cancel). */
+  private platformHeader(): Record<string, string> {
+    return this.cfg.mti.platform ? { "X-PLATFORM": this.cfg.mti.platform } : {};
+  }
+
+  /** Path yang ditandatangani: hanya path layanan, atau termasuk prefix dari MTI_BASE_URL. */
+  private signPath(path: string) {
+    if (!this.cfg.mti.signFullPath) return path;
+    try {
+      return new URL(this.cfg.mti.baseUrl).pathname.replace(/\/$/, "") + path;
+    } catch {
+      return path;
+    }
+  }
+
   async call(api: Exclude<MtiApi, "token">, bodyObj: object, opts: CallOpts = {}): Promise<MtiResult> {
+    const r = await this.callOnce(api, bodyObj, opts);
+    // Token ditolak (mis. kedaluwarsa lebih cepat di sisi MTI): minta token baru lalu ulangi sekali.
+    if (r.httpStatus === 401 && /^401\d{2}01$/.test(r.responseCode ?? "") && !opts.externalId) {
+      this.token = null;
+      return this.callOnce(api, bodyObj, opts);
+    }
+    return r;
+  }
+
+  private async callOnce(api: Exclude<MtiApi, "token">, bodyObj: object, opts: CallOpts): Promise<MtiResult> {
     const token = await this.getToken({ scenario: opts.scenario });
     const path = this.cfg.mti.paths[api];
     const ts = timestampWib();
@@ -190,11 +216,12 @@ export class MtiClient {
       "X-TIMESTAMP": ts,
       "X-SIGNATURE": symmetricSignature(
         this.cfg.mti.clientSecret,
-        symmetricStringToSign({ method: "POST", endpointUrl: path, accessToken: token, body, timestamp: ts }),
+        symmetricStringToSign({ method: "POST", endpointUrl: this.signPath(path), accessToken: token, body, timestamp: ts }),
       ),
       "X-EXTERNAL-ID": externalId,
       "X-PARTNER-ID": this.cfg.mti.partnerId,
       "CHANNEL-ID": this.cfg.mti.channelId,
+      ...this.platformHeader(),
     };
     return this.send(api, path, headers, body, opts, externalId);
   }

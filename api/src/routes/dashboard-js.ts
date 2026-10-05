@@ -176,7 +176,34 @@ export const DASHBOARD_JS = String.raw`
 
   // ---------- UAT ----------
   var cases = [];
+  // ---------- SIT ----------
+  function loadSit() {
+    var id = $("sitOrder").value.trim();
+    return api("/admin/sit/rows" + (id ? "?orderId=" + encodeURIComponent(id) : "")).then(function (d) {
+      if (!id && d.orderId) $("sitOrder").placeholder = "terbaru: " + d.orderId;
+      $("sitBody").innerHTML = d.rows.length ? d.rows.map(function (r) {
+        var b = r.status === "PASS" ? '<span class="b b-ok">PASS</span>' : r.status === "FAIL" ? '<span class="b b-bad">FAIL</span>' : '<span class="b b-mut">Belum</span>';
+        return "<tr><td class=num>" + r.no + "</td><td>" + esc(r.group) + '<div class="muted">' + esc(r.name) + '</div></td><td class="mono">' + esc(r.responseCode || "-") +
+          '</td><td class="mono">' + esc(r.externalId || "-") + "</td><td class=num>" + esc(r.transactionDate ? r.transactionDate + " " + r.transactionTime : "-") + "</td><td>" + b + "</td></tr>";
+      }).join("") : '<tr><td colspan="6" class="muted">Belum ada pesanan untuk SIT.</td></tr>';
+    }).catch(function (e) { if (e.message !== "Unauthorized") toast(e.message); });
+  }
+  $("sitLoad").addEventListener("click", loadSit);
+  $("sitRun").addEventListener("click", function () {
+    var b = $("sitRun"); busy(b, true); b.textContent = "Berjalan…";
+    api("/admin/sit/run", {}).then(function (r) {
+      $("sitOrder").value = r.orderId;
+      $("sitNote").textContent = r.menunggu ? "Pesanan #" + r.orderId + ": " + r.menunggu : "Pesanan #" + r.orderId + " selesai: " + r.steps.map(function (x) { return x.step + " " + (x.responseCode || "-"); }).join(" · ");
+      return loadSit();
+    }).catch(function (er) { toast(er.message); }).then(function () { b.textContent = "Jalankan alur SIT"; busy(b, false); });
+  });
+  $("sitDl").addEventListener("click", function () {
+    var id = $("sitOrder").value.trim();
+    download("/admin/sit/export.xlsx" + (id ? "?orderId=" + encodeURIComponent(id) : ""), "SIT-QR-MPM-SNAP-Migimo" + (id ? "-pesanan-" + id : "") + ".xlsx");
+  });
+
   function loadUat() {
+    loadSit();
     api("/admin/mti/check").then(function (c) {
       var el = $("mtiCheck");
       el.hidden = c.ok;
@@ -251,7 +278,7 @@ export const DASHBOARD_JS = String.raw`
   // ---------- Aktivitas ----------
   var ACT = {
     "/admin/qr": "Buat QRIS", "/admin/orders/:id/inquiry": "Cek status", "/admin/orders/:id/refund": "Refund",
-    "/admin/uat/run/:no": "Jalankan skenario UAT", "/admin/uat/run-all": "Jalankan semua UAT",
+    "/admin/uat/run/:no": "Jalankan skenario UAT", "/admin/sit/run": "Jalankan alur SIT", "/admin/uat/run-all": "Jalankan semua UAT",
     "/admin/sim/pay/:orderId": "Bayar (simulasi)", "/admin/wa/transfers/:id/dikirim": "Tandai kiriman disalurkan",
     "/admin/wa/contacts/:waId/send": "Balas WhatsApp", "/admin/wa/contacts/:waId/handoff": "Ubah status bot",
     "/admin/wa/uji": "Uji coba bot", "/admin/wa/uji/reset": "Mulai ulang uji bot", login: "Masuk", logout: "Keluar", login_ditolak: "Login ditolak"

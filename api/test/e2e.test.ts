@@ -64,12 +64,19 @@ test("alur lengkap: generate QR → bayar → notify → inquiry → refund", as
   assert.equal(inq.result.body.latestTransactionStatus, "00");
   assert.equal(inq.order.status, "paid");
   assert.ok(inq.order.approval_code);
+  // Notify dicocokkan lewat X-EXTERNAL-ID; reference pembayaran berbeda dari referenceNo QR Generate.
+  assert.ok(inq.order.paid_reference_no);
+  assert.notEqual(inq.order.paid_reference_no, inq.order.reference_no);
+  assert.match(inq.order.paid_transaction_date, /^\d{8}$/);
 
   const ref = await (await api(`/admin/orders/${gen.order.id}/refund`, {})).json();
   assert.equal(ref.result.responseCode, "2007700");
   assert.equal(ref.order.status, "refunded");
 
   const logs = await (await api(`/admin/logs?limit=50`)).json();
+  const refundLog = logs.find((l: any) => l.api === "cancel" && l.order_id === gen.order.id);
+  assert.equal(JSON.parse(refundLog.request_body).originalReferenceNo, inq.order.paid_reference_no);
+  assert.ok(logs.filter((l: any) => l.direction === "out").every((l: any) => l.request_headers["X-PLATFORM"] === "PORTAL"));
   assert.ok(logs.some((l: any) => l.api === "notify" && l.direction === "in"));
   assert.ok(logs.every((l: any) => !String(l.request_headers?.Authorization ?? "").includes(".") || l.request_headers.Authorization.endsWith("…")));
 });
@@ -253,4 +260,31 @@ test("MID/TID berisi spasi: peringatan muncul dan Jalankan semua tidak error 500
   } finally {
     await app.close();
   }
+});
+
+test("SIT: alur 4 skenario dan ekspor Excel dengan kolom dokumen Yokke", async () => {
+  const run = await (await api("/admin/sit/run", {})).json();
+  assert.equal(run.menunggu, null);
+  assert.deepEqual(run.steps.map((s: any) => s.responseCode), ["2004700", "2005100", "2007700"]);
+
+  const { orderId, rows } = await (await api(`/admin/sit/rows?orderId=${run.orderId}`)).json();
+  assert.equal(orderId, run.orderId);
+  assert.deepEqual(rows.map((r: any) => [r.responseCode, r.status]), [
+    ["2004700", "PASS"],
+    ["2005100", "PASS"],
+    ["2007700", "PASS"],
+    ["2005200", "PASS"],
+  ]);
+  assert.match(rows[0].externalId, /^\d{15}$/);
+  assert.ok(!rows[0].evidence.includes(".") || !/Bearer [A-Za-z0-9-_]{40,}/.test(rows[0].evidence), "token tidak bocor");
+
+  const r = await api(`/admin/sit/export.xlsx?orderId=${run.orderId}`);
+  assert.equal(r.headers.get("content-type"), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  const ExcelJS = (await import("exceljs")).default;
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(Buffer.from(await r.arrayBuffer()) as any);
+  const ws = wb.getWorksheet("SIT-Open API")!;
+  assert.equal(ws.getCell("J1").value, "Evidence - Request & Response Body ( LOG )");
+  assert.equal(ws.getCell("F2").value, "2004700");
+  assert.equal(ws.getCell("K5").value, "PASS");
 });

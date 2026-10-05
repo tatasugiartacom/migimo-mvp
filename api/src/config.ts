@@ -63,6 +63,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
       merchantId: env.MTI_MERCHANT_ID ?? "",
       terminalId: env.MTI_TERMINAL_ID ?? "",
       channelId: env.MTI_CHANNEL_ID ?? "02",
+      /** Header X-PLATFORM (Postman collection sandbox Yokke memakai "PORTAL"). Kosongkan untuk tidak mengirim. */
+      platform: env.MTI_PLATFORM ?? "PORTAL",
+      /**
+       * true: endpointUrl pada tanda tangan HMAC memakai path lengkap termasuk prefix base URL
+       * (mis. /qrissnapmpm/1.0.11/v2.0/qr/qr-mpm-generate). Bawaan false: hanya /v2.0/qr/qr-mpm-generate.
+       */
+      signFullPath: env.MTI_SIGN_FULL_PATH === "true",
       /** Kunci privat Migimo untuk tanda tangan Get Token. */
       privateKey: pem(env.MTI_PRIVATE_KEY),
       /** Kunci publik MTI untuk memverifikasi QR Payment Credit Notify. */
