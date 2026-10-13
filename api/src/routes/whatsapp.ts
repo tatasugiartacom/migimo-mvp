@@ -76,6 +76,7 @@ export function whatsappRoutes(app: FastifyInstance, deps: { cfg: Config; db: Db
       webhookAman: !!cfg.wa.appSecret && !!cfg.wa.verifyToken,
       ai: agent.aiReady,
       model: cfg.ai.model,
+      praPeluncuran: cfg.wa.praPeluncuran,
     }));
 
     r.get("/admin/wa/contacts", async () => {

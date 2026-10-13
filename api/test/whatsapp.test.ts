@@ -107,6 +107,8 @@ async function tunggu<T>(fn: () => T | Promise<T>, ms = 4000): Promise<T> {
   }
 }
 
+let cfg: ReturnType<typeof loadConfig>;
+
 before(async () => {
   db = createDb(DB_URL);
   await db.query(
@@ -115,7 +117,7 @@ before(async () => {
   await migrate(db);
   await migrateAuth(db);
   await migrateWa(db);
-  const cfg = loadConfig({
+  cfg = loadConfig({
     MTI_MODE: "simulator",
     ADMIN_TOKEN: ADMIN,
     DATABASE_URL: DB_URL,
@@ -249,6 +251,22 @@ test("AI gagal: pelanggan tetap dibalas dan server tetap hidup", async () => {
   assert.equal((await fetch(base + "/health")).status, 200);
 });
 
+test("pra-peluncuran: QRIS tidak dibuat, kiriman diteruskan ke tim", async () => {
+  const wa = "628555";
+  cfg.wa.praPeluncuran = true;
+  try {
+    const n = terkirim().length;
+    await webhook(wa, "YA");
+    const b = await tunggu(() => terkirim().slice(n).find((g) => g.body.to === wa && /Hasil:/.test(g.body.text?.body ?? "")));
+    assert.match(b.body.text.body, /diteruskan ke tim Migimo/);
+    assert.ok(!terkirim().slice(n).some((g) => g.body.to === wa && g.body.type === "image"), "tidak ada gambar QRIS");
+    assert.equal((await db.query("SELECT count(*)::int AS n FROM wa_transfers WHERE wa_id = $1", [wa])).rows[0].n, 0);
+    assert.equal((await db.query("SELECT handoff FROM wa_contacts WHERE wa_id = $1", [wa])).rows[0].handoff, true);
+  } finally {
+    cfg.wa.praPeluncuran = false;
+  }
+});
+
 test("diteruskan ke tim: bot berhenti membalas sampai diaktifkan lagi", async () => {
   const wa = "628333";
   await webhook(wa, "saya mau komplain");
@@ -285,7 +303,7 @@ test("uji coba bot dari dashboard tanpa WhatsApp", async () => {
   assert.equal(m.length, 0);
 
   const st = await (await admin("/admin/wa/status")).json();
-  assert.deepEqual(st, { whatsapp: true, webhookAman: true, ai: true, model: "claude-sonnet-5-5" });
+  assert.deepEqual(st, { whatsapp: true, webhookAman: true, ai: true, model: "claude-sonnet-5-5", praPeluncuran: false });
 });
 
 test("API admin WhatsApp wajib login", async () => {

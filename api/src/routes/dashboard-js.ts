@@ -328,11 +328,23 @@ export const DASHBOARD_JS = String.raw`
   function waBadge(s) { var m = WA_ST[s] || ["b-mut", s]; return '<span class="b ' + m[0] + '">' + esc(m[1]) + "</span>"; }
   function onOff(ok, label) { return '<span class="b ' + (ok ? "b-ok" : "b-bad") + '">' + esc(label) + ": " + (ok ? "siap" : "belum diatur") + "</span>"; }
   function teksBlok(content) {
-    return (content || []).filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("\n");
+    return (content || []).map(function (b) {
+      if (b.type === "text") return b.text;
+      // Data kiriman yang dikumpulkan bot, agar tim bisa memproses pembayaran (terutama di mode pra-peluncuran).
+      if (b.type === "tool_use" && b.name === "buat_qris_pembayaran") {
+        var i = b.input || {}, p = i.penerima || {};
+        return "[Data kiriman] Negara: " + (i.negara || "-") +
+          (i.nominal_kirim ? " · Kirim: " + i.nominal_kirim : "") +
+          (i.nominal_terima_rupiah ? " · Diterima: Rp" + i.nominal_terima_rupiah : "") +
+          " · Penerima: " + (p.nama || "-") + " (" + (p.metode || "-") + " " + (p.nomor || "-") + ")";
+      }
+      return "";
+    }).filter(Boolean).join("\n");
   }
   function loadWa() {
     api("/admin/wa/status").then(function (s) {
-      $("waStatus").innerHTML = onOff(s.whatsapp, "WhatsApp Cloud API") + onOff(s.webhookAman, "Webhook") + onOff(s.ai, "AI (" + s.model + ")");
+      $("waStatus").innerHTML = onOff(s.whatsapp, "WhatsApp Cloud API") + onOff(s.webhookAman, "Webhook") + onOff(s.ai, "AI (" + s.model + ")") +
+        (s.praPeluncuran ? '<span class="b b-wait">Pra-peluncuran: QRIS dibuat tim, bukan bot</span>' : "");
     }).catch(function () {});
     api("/admin/wa/transfers").then(function (rows) {
       $("waTransfers").innerHTML = rows.length ? rows.map(function (t) {

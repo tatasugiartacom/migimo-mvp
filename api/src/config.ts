@@ -47,6 +47,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
       graphVersion: env.WA_GRAPH_VERSION ?? "v25.0",
       /** Batas nominal QRIS per transaksi (rupiah). */
       maxRupiah: Number(env.WA_MAX_RUPIAH ?? 10_000_000),
+      /** Pra-peluncuran: bot tidak membuat QRIS, data kiriman diteruskan ke tim. */
+      praPeluncuran: /^(1|true|ya)$/i.test(env.WA_PRA_PELUNCURAN ?? ""),
     },
     ai: {
       anthropicApiKey: env.ANTHROPIC_API_KEY ?? "",

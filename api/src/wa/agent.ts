@@ -320,6 +320,17 @@ export class WaAgent {
         if (Number(rows[0].n) >= MAKS_MENUNGGU)
           throw new Error("Masih ada beberapa QRIS yang belum dibayar. Minta pengguna menyelesaikannya dulu atau hubungkan ke tim.");
 
+        if (this.cfg.wa.praPeluncuran) {
+          await this.db.query("UPDATE wa_contacts SET handoff = true WHERE wa_id = $1", [waId]);
+          return {
+            status:
+              "Data kiriman sudah dicatat dan diteruskan ke tim Migimo. QRIS belum dibuat otomatis. " +
+              "Sampaikan ke pengguna bahwa tim Migimo akan membalas di chat ini dengan instruksi pembayaran QRIS. " +
+              "Jangan menjanjikan waktu tertentu.",
+            ringkasan: { ...h, penerima: { nama: String(pen.nama).trim(), metode: String(pen.metode).trim(), nomor: samarkan(String(pen.nomor).replace(/\s/g, "")) } },
+          };
+        }
+
         const { order, result } = await this.payments.createQr({ amount: h.totalRupiah, scenario: "WA" });
         if (!result.ok || !order.qr_content) {
           throw new Error("QRIS gagal dibuat oleh sistem pembayaran. Minta maaf dan tawarkan coba lagi nanti atau hubungkan ke tim.");
