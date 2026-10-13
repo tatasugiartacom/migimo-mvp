@@ -48,6 +48,8 @@ const aiFetch: typeof fetch = async (_input, init) => {
       stop_sequence: null,
       usage: { input_tokens: 10, output_tokens: 10 },
     });
+  if (JSON.stringify(last.content).includes("AI-GAGAL"))
+    return Response.json({ type: "error", error: { type: "authentication_error", message: "invalid x-api-key" } }, { status: 401 });
   const tr = last.content.find((b: any) => b.type === "tool_result");
   if (tr) return reply([{ type: "text", text: "Hasil: " + tr.content }], "end_turn");
   const text = last.content.filter((b: any) => b.type === "text").map((b: any) => b.text).join(" ");
@@ -236,6 +238,15 @@ test("pesan yang sama dari Meta diproses sekali", async () => {
   await tunggu(async () => (await db.query("SELECT 1 FROM wa_messages WHERE wa_id = '628222' AND role = 'assistant'")).rowCount);
   await new Promise((r) => setTimeout(r, 150));
   assert.equal(aiCalls.length - before, 1);
+});
+
+test("AI gagal: pelanggan tetap dibalas dan server tetap hidup", async () => {
+  const wa = "628444";
+  await webhook(wa, "AI-GAGAL halo");
+  const b = await tunggu(() => terkirim().find((g) => g.body.to === wa && /Tim kami akan segera membalas/.test(g.body.text?.body ?? "")));
+  assert.ok(b);
+  await new Promise((r) => setTimeout(r, 100));
+  assert.equal((await fetch(base + "/health")).status, 200);
 });
 
 test("diteruskan ke tim: bot berhenti membalas sampai diaktifkan lagi", async () => {

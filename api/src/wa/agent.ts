@@ -216,9 +216,11 @@ export class WaAgent {
     const prev = this.antrean.get(p.waId) ?? Promise.resolve();
     const run = prev.catch(() => {}).then(() => this.proses(p));
     this.antrean.set(p.waId, run);
-    run.finally(() => {
-      if (this.antrean.get(p.waId) === run) this.antrean.delete(p.waId);
-    });
+    run
+      .finally(() => {
+        if (this.antrean.get(p.waId) === run) this.antrean.delete(p.waId);
+      })
+      .catch(() => {}); // Galat dilaporkan lewat `run`; rantai ini jangan sampai mematikan proses.
     return run;
   }
 
@@ -230,16 +232,28 @@ export class WaAgent {
     const { rows } = await this.db.query<{ handoff: boolean }>("SELECT handoff FROM wa_contacts WHERE wa_id = $1", [p.waId]);
     if (rows[0]?.handoff) return; // Sedang ditangani tim.
 
-    if (!this.client) {
-      const t = "Terima kasih sudah menghubungi Migimo. Tim kami akan segera membalas pesan Kakak.";
-      await p.outbox.text(t);
-      await this.simpan(p.waId, "assistant", [{ type: "text", text: t }]);
-      return;
-    }
+    if (!this.client) return this.balasCadangan(p);
 
+    try {
+      await this.jawabDenganAi(p);
+    } catch (e) {
+      // AI tidak bisa dihubungi (kunci salah, kuota, gangguan): pelanggan tetap dapat balasan.
+      await this.balasCadangan(p).catch(() => {});
+      throw e;
+    }
+  }
+
+  private async balasCadangan(p: { waId: string; outbox: Outbox }) {
+    const t = "Terima kasih sudah menghubungi Migimo. Tim kami akan segera membalas pesan Kakak.";
+    await p.outbox.text(t);
+    await this.simpan(p.waId, "assistant", [{ type: "text", text: t }]);
+  }
+
+  private async jawabDenganAi(p: { waId: string; text: string; outbox: Outbox }) {
+    const client = this.client!;
     const messages = await this.riwayat(p.waId);
     for (let putaran = 0; putaran < MAKS_PUTARAN_ALAT; putaran++) {
-      const res = await this.client.messages.create({
+      const res = await client.messages.create({
         model: this.cfg.ai.model,
         max_tokens: 1024,
         system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
