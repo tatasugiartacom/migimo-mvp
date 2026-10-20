@@ -34,3 +34,18 @@
     text-wrap: pretty;
   }
 }
+
+/* Kursor berkedip untuk contoh nominal yang "diketik" di kalkulator. */
+@keyframes kedip {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+.kursor-ketik {
+  display: inline-block;
+  width: 2px;
+  height: 0.9em;
+  margin-left: 2px;
+  vertical-align: -0.08em;
+  background: var(--color-hijau);
+  animation: kedip 1s step-end infinite;
+}

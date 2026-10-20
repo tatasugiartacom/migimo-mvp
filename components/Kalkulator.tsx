@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bendera } from "./Bendera";
 import { IkonWhatsApp } from "./Ikon";
 import {
@@ -19,16 +19,55 @@ function angka(teks: string) {
   return parseInt(teks.replace(/\D/g, ""), 10) || 0;
 }
 
+/** Mengetik `teks` huruf demi huruf, berhenti sejenak, menghapus, lalu mengulang. */
+function useKetikan(teks: string, aktif: boolean) {
+  const [n, setN] = useState(0);
+  const [hapus, setHapus] = useState(false);
+  const [diam, setDiam] = useState(false);
+
+  useEffect(() => {
+    const m = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setDiam(m.matches);
+    const ubah = () => setDiam(m.matches);
+    m.addEventListener("change", ubah);
+    return () => m.removeEventListener("change", ubah);
+  }, []);
+
+  useEffect(() => {
+    setN(0);
+    setHapus(false);
+  }, [teks, aktif]);
+
+  useEffect(() => {
+    if (!aktif || diam) return;
+    const penuh = n === teks.length;
+    const jeda = hapus ? (n === 0 ? 500 : 45) : penuh ? 1600 : n === 0 ? 400 : 110;
+    const t = setTimeout(() => {
+      if (!hapus && penuh) setHapus(true);
+      else if (hapus && n === 0) setHapus(false);
+      else setN((x) => x + (hapus ? -1 : 1));
+    }, jeda);
+    return () => clearTimeout(t);
+  }, [n, hapus, aktif, diam, teks]);
+
+  return diam ? teks : teks.slice(0, n);
+}
+
 export function Kalkulator() {
   const [kode, setKode] = useState<KodeNegara>("JP");
   // Kolom yang terakhir diketik jadi sumber; kolom lainnya dihitung dari kurs.
   const [sumber, setSumber] = useState<"kirim" | "terima">("kirim");
-  const [kirimInput, setKirimInput] = useState(NEGARA[0].nominalAwal);
+  // 0 = belum diisi: kolom menampilkan contoh nominal yang "diketik" untuk mengajak pengunjung mengisi.
+  const [kirimInput, setKirimInput] = useState(0);
+  const [fokus, setFokus] = useState(false);
   const [terimaInput, setTerimaInput] = useState(0);
   const [cara, setCara] = useState("Rekening bank");
 
   const n = NEGARA.find((x) => x.kode === kode) ?? NEGARA[0];
-  const kirim = sumber === "kirim" ? kirimInput : Math.round(terimaInput / n.kurs);
+  const kosong = sumber === "kirim" && kirimInput === 0;
+  const contoh = useKetikan(rupiah(n.nominalAwal), kosong && !fokus);
+  // Selama kosong, rincian memakai contoh nominal agar kartu tetap menunjukkan gambaran hasilnya.
+  const kirim = sumber === "kirim" ? kirimInput || n.nominalAwal : Math.round(terimaInput / n.kurs);
   const terima = sumber === "terima" ? terimaInput : kirim * n.kurs;
 
   const biaya = Math.round(BIAYA_RUPIAH / n.kurs);
@@ -68,7 +107,7 @@ export function Kalkulator() {
             const baru = NEGARA.find((x) => x.kode === e.target.value) ?? NEGARA[0];
             setKode(baru.kode);
             setSumber("kirim");
-            setKirimInput(baru.nominalAwal);
+            setKirimInput(0);
           }}
           className="min-w-0 grow h-14 border-none bg-transparent font-[inherit] text-[19px] font-medium text-teks outline-none cursor-pointer"
         >
@@ -85,17 +124,32 @@ export function Kalkulator() {
           Berapa yang mau kamu kirim?
         </label>
         <div className="flex items-center gap-3">
-          <input
-            id="nominal"
-            inputMode="numeric"
-            autoComplete="off"
-            value={rupiah(kirim)}
-            onChange={(e) => {
-              setSumber("kirim");
-              setKirimInput(Math.min(angka(e.target.value), MAKS_KIRIM));
-            }}
-            className={input}
-          />
+          <div className="relative min-w-0 grow flex">
+            <input
+              id="nominal"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder={kosong && fokus ? rupiah(n.nominalAwal) : undefined}
+              aria-description={kosong ? `Contoh: ${rupiah(n.nominalAwal)} ${n.mataUang}` : undefined}
+              value={kosong ? "" : rupiah(kirim)}
+              onFocus={() => setFokus(true)}
+              onBlur={() => setFokus(false)}
+              onChange={(e) => {
+                setSumber("kirim");
+                setKirimInput(Math.min(angka(e.target.value), MAKS_KIRIM));
+              }}
+              className={`${input} placeholder:text-[#B7B3A8]`}
+            />
+            {kosong && !fokus && (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 left-0 flex items-center text-[26px] font-semibold text-[#9A968B]"
+              >
+                {contoh}
+                <span className="kursor-ketik" />
+              </span>
+            )}
+          </div>
           <span className="flex items-center gap-2 text-[17px] font-semibold">
             <Bendera kode={kode} size={22} />
             {n.mataUang}
@@ -112,12 +166,13 @@ export function Kalkulator() {
             id="terima"
             inputMode="numeric"
             autoComplete="off"
-            value={rupiah(terima)}
+            value={kosong ? "" : rupiah(terima)}
+            placeholder={kosong ? rupiah(terima) : undefined}
             onChange={(e) => {
               setSumber("terima");
               setTerimaInput(Math.min(angka(e.target.value), MAKS_TERIMA));
             }}
-            className={input}
+            className={`${input} placeholder:text-[#9A968B]`}
           />
           <span className="flex items-center gap-2 text-[17px] font-semibold">
             <Bendera kode="ID" size={22} />
