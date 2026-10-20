@@ -60,12 +60,15 @@ export function Kalkulator() {
   // 0 = belum diisi: kolom menampilkan contoh nominal yang "diketik" untuk mengajak pengunjung mengisi.
   const [kirimInput, setKirimInput] = useState(0);
   const [fokus, setFokus] = useState(false);
+  const [fokusTerima, setFokusTerima] = useState(false);
   const [terimaInput, setTerimaInput] = useState(0);
   const [cara, setCara] = useState("Rekening bank");
 
   const n = NEGARA.find((x) => x.kode === kode) ?? NEGARA[0];
   const kosong = sumber === "kirim" && kirimInput === 0;
   const contoh = useKetikan(rupiah(n.nominalAwal), kosong && !fokus);
+  // Contoh nominal diterima baru tampil setelah contoh nominal kirim selesai "diketik": sebab lalu akibat.
+  const contohTerimaTampil = fokus || contoh === rupiah(n.nominalAwal);
   // Selama kosong, rincian memakai contoh nominal agar kartu tetap menunjukkan gambaran hasilnya.
   const kirim = sumber === "kirim" ? kirimInput || n.nominalAwal : Math.round(terimaInput / n.kurs);
   const terima = sumber === "terima" ? terimaInput : kirim * n.kurs;
@@ -162,18 +165,32 @@ export function Kalkulator() {
           Berapa yang diterima keluarga?
         </label>
         <div className="flex items-center gap-3">
-          <input
-            id="terima"
-            inputMode="numeric"
-            autoComplete="off"
-            value={kosong ? "" : rupiah(terima)}
-            placeholder={kosong ? rupiah(terima) : undefined}
-            onChange={(e) => {
-              setSumber("terima");
-              setTerimaInput(Math.min(angka(e.target.value), MAKS_TERIMA));
-            }}
-            className={`${input} placeholder:text-[#9A968B]`}
-          />
+          <div className="relative min-w-0 grow flex">
+            <input
+              id="terima"
+              inputMode="numeric"
+              autoComplete="off"
+              aria-description={kosong ? `Contoh: Rp${rupiah(terima)}` : undefined}
+              value={kosong ? "" : rupiah(terima)}
+              onFocus={() => setFokusTerima(true)}
+              onBlur={() => setFokusTerima(false)}
+              onChange={(e) => {
+                setSumber("terima");
+                setTerimaInput(Math.min(angka(e.target.value), MAKS_TERIMA));
+              }}
+              className={input}
+            />
+            {kosong && !fokusTerima && (
+              <span
+                aria-hidden="true"
+                className={`pointer-events-none absolute inset-y-0 left-0 flex items-center text-[26px] font-semibold text-[#9A968B] transition-opacity duration-300 ${
+                  contohTerimaTampil ? "opacity-100" : "opacity-0"
+                }`}
+              >
+                {rupiah(terima)}
+              </span>
+            )}
+          </div>
           <span className="flex items-center gap-2 text-[17px] font-semibold">
             <Bendera kode="ID" size={22} />
             IDR
