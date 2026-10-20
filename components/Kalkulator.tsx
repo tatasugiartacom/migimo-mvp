@@ -160,6 +160,15 @@ export function Kalkulator() {
         </div>
       </div>
 
+      {/* Panah penghubung: nominal kirim menghasilkan nominal diterima. */}
+      <div aria-hidden="true" className="relative z-10 -my-[25px] flex justify-center">
+        <span className="flex h-9 w-9 items-center justify-center rounded-full border border-[#E1DED6] bg-white text-hijau shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2.5v11M3.5 9 8 13.5 12.5 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      </div>
+
       <div className={`${kotak} focus-within:border-hijau`}>
         <label htmlFor="terima" className={label}>
           Berapa yang diterima keluarga?
