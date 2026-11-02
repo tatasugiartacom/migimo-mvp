@@ -56,7 +56,8 @@ export const KASUS_UAT: KasusUat[] = [
   k("ASPI", 5, "Cannot use the same X-EXTERNAL-ID", "409xx00 Conflict", "^409\\d{2}00$", "auto"),
   k("ASPI", 6, "Generate QR – Show QR Code", "2004700 Successful", "^2004700$", "auto"),
   k("ASPI", 7, "Generate QR – Invalid Merchant", "4044708 Invalid Merchant", "^4044708$", "auto"),
-  k("ASPI", 15, "Query Payment – Pending Transaction/Inquiry", "2005100 Successful", "^2005100$", "auto"),
+  // Catatan Yokke: "scenario ini sama dengan scenario check status sukses/inquiry" → inquiry atas transaksi yang dibayar.
+  k("ASPI", 15, "Query Payment – Pending Transaction/Inquiry", "2005100 Successful", "^2005100$", "bayar", BAYAR),
   k("ASPI", 16, "Query Payment – Transaction Not Found", "4045101 Transaction Not Found", "^4045101$", "auto"),
   k("ASPI", 17, "Payment Notify – Notify Success", "2005200 Successful", "^2005200$", "notify", NOTIFY),
   k("ASPI", 18, "Payment Notify – Notify Failed", "2005200 Successful", "^2005200$", "notify", NOTIFY),
@@ -232,8 +233,13 @@ export class UatYokke {
 
   /** Notify Yokke yang cocok dengan skenario (diambil otomatis dari log masuk). */
   private async cariNotify(c: KasusUat): Promise<LogRow | null> {
+    // Hanya notify untuk MID yang sedang diuji; di mode live notify simulator lama tidak pernah dipakai sebagai bukti.
     const { rows } = await this.db.query<LogRow>(
-      "SELECT * FROM mti_logs WHERE direction = 'in' AND api = 'notify' ORDER BY id DESC LIMIT 200",
+      `SELECT l.* FROM mti_logs l JOIN orders o ON o.id = l.order_id
+       WHERE l.direction = 'in' AND l.api = 'notify' AND o.merchant_id = $1
+         AND ($2 OR COALESCE(l.request_headers->>'x-partner-id', '') <> 'MTI-SIMULATOR')
+       ORDER BY l.id DESC LIMIT 200`,
+      [this.cfg.mti.merchantId, this.cfg.mti.mode === "simulator"],
     );
     const jenis = ["ASPI-18", "ONUS-16"].includes(c.id) ? "gagal" : ["ONUS-13", "OFFUS-02"].includes(c.id) ? "ganda" : "sukses";
     return (
@@ -261,6 +267,8 @@ export class UatYokke {
     const tid = this.cfg.mti.terminalId;
     // MID/TID salah dengan panjang sama, supaya yang diuji "tidak dikenal", bukan "format salah".
     const salah = (v: string) => (v.replace(/\d/g, "9") === v ? v.replace(/\d/g, "8") : v.replace(/\d/g, "9"));
+    // MID tidak dikenal: digit terakhir diganti (MID semua angka 9 membuat server UAT Yokke tidak menjawab).
+    const midSalah = mid.slice(0, -1) + ((Number(mid.slice(-1)) + 1) % 10);
     const waktu = new Date().toISOString();
     const lulus = (code: string | null) => code !== null && new RegExp(c.kode).test(code);
     const dariMti = (rs: MtiResult[], order: Order | null, catatan: string | null = null): HasilUat => {
@@ -352,19 +360,9 @@ export class UatYokke {
           case "ASPI-07":
           case "ONUS-03":
           case "ONUS-04": {
-            const overrides = c.id === "ONUS-04" ? { terminalId: salah(tid) } : { merchantId: salah(mid) };
+            const overrides = c.id === "ONUS-04" ? { terminalId: salah(tid) } : { merchantId: midSalah };
             const { order, result } = await p.createQr({ amount: this.amount, scenario: s, overrides });
             h = dariMti([result], order);
-            break;
-          }
-          case "ASPI-15": {
-            const gen = await p.createQr({ amount: this.amount, scenario: s });
-            if (!gen.result.ok) {
-              h = dariMti([gen.result], gen.order, "Generate QR gagal, inquiry tidak dijalankan");
-              break;
-            }
-            const inq = await p.inquiry(gen.order.id, { scenario: s });
-            h = dariMti([gen.result, inq.result], inq.order, `latestTransactionStatus=${inq.result.body?.latestTransactionStatus ?? "-"}`);
             break;
           }
           case "ASPI-16":
@@ -395,6 +393,7 @@ export class UatYokke {
             h = dariMti([result], o2, "Refund kedua untuk pesanan yang sudah di-refund");
             break;
           }
+          case "ASPI-15":
           case "ONUS-18":
           case "OFFUS-07": {
             const { order, catatan } = await this.pesananDibayar(c, opts.orderId);

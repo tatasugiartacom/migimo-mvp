@@ -65,7 +65,6 @@ test("skenario otomatis lulus terhadap simulator (kode SNAP sesuai dokumen)", as
     "ASPI-05": /^409\d{2}00$/,
     "ASPI-06": /^2004700$/,
     "ASPI-07": /^4044708$/,
-    "ASPI-15": /^2005100$/,
     "ASPI-16": /^4045101$/,
     "ONUS-01": /^2004700$/,
     "ONUS-03": /^4044708$/,
@@ -96,6 +95,10 @@ test("pembayaran on us: notify, refund same day, refund ganda, inquiry", async (
   assert.equal(ganda.status, "pass", ganda.catatan);
   const { rows } = await db.query("SELECT error FROM mti_logs WHERE id = $1", [ganda.logIds[0]]);
   assert.match(rows[0].error, /Pembayaran ganda/);
+
+  const aspi15 = await run("ASPI-15");
+  assert.equal(aspi15.status, "pass", aspi15.catatan);
+  assert.equal(aspi15.responseCode, "2005100");
 
   const inq = await run("ONUS-18");
   assert.equal(inq.status, "pass", inq.catatan);
