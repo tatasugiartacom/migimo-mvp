@@ -1,6 +1,6 @@
 import type { Db } from "./db.js";
 import { money, nextPartnerReferenceNo, transactionDateWib } from "./ids.js";
-import type { MtiClient, MtiResult } from "./mti/client.js";
+import type { CallOpts, MtiClient, MtiResult } from "./mti/client.js";
 
 export type OrderStatus = "created" | "qr_generated" | "paid" | "failed" | "refunded" | "timeout" | "error";
 
@@ -39,6 +39,8 @@ export interface Overrides {
   originalTransactionDate?: string;
   originalApprovalCode?: string;
   originalPartnerReferenceNo?: string;
+  /** Nilai amount.value apa adanya (skenario "Invalid Field Format", mis. "10000" tanpa desimal). */
+  amountValue?: string;
 }
 
 export class Payments {
@@ -115,6 +117,7 @@ export class Payments {
     feeAmount?: number;
     scenario?: string;
     overrides?: Overrides;
+    tamper?: CallOpts["tamper"];
   }): Promise<{ order: Order; result: MtiResult }> {
     const o = p.overrides ?? {};
     const partnerReferenceNo = o.partnerReferenceNo ?? (await nextPartnerReferenceNo(this.db));
@@ -131,7 +134,7 @@ export class Payments {
       merchantId,
       terminalId,
       partnerReferenceNo,
-      amount: { value: money(p.amount), currency: "IDR" },
+      amount: { value: o.amountValue ?? money(p.amount), currency: "IDR" },
     };
     if (p.feeAmount !== undefined) body.feeAmount = { value: money(p.feeAmount), currency: "IDR" };
 
@@ -139,6 +142,7 @@ export class Payments {
       scenario: p.scenario,
       orderId,
       externalId: o.externalId,
+      tamper: p.tamper,
     });
     const status: OrderStatus = result.ok ? "qr_generated" : result.timedOut ? "timeout" : "failed";
     await this.setStatus(orderId, {
@@ -206,9 +210,12 @@ export class Payments {
 
   /**
    * 3.6 QR Payment Credit Notify dari MTI. Mengembalikan kode respons yang dikirim balik ke MTI.
-   * Notifikasi ganda untuk transaksi yang sudah dibayar ditolak (skenario UAT "Double credit").
+   * Notifikasi ganda (double payment) dijawab 2005200 sesuai dokumen UAT Yokke, tanpa mengubah status pesanan;
+   * pembayaran kedua tercatat di log notify untuk ditindaklanjuti tim.
    */
-  async applyNotify(payload: any): Promise<{ httpStatus: number; responseCode: string; responseMessage: string; orderId?: number }> {
+  async applyNotify(
+    payload: any,
+  ): Promise<{ httpStatus: number; responseCode: string; responseMessage: string; orderId?: number; duplicate?: boolean }> {
     const ref = String(payload?.originalReferenceNo ?? "");
     const extId = String(payload?.originalExternalId ?? payload?.originalExternalID ?? "");
     const status = String(payload?.latestTransactionStatus ?? "");
@@ -227,7 +234,7 @@ export class Payments {
       return { httpStatus: 404, responseCode: "4045213", responseMessage: "Invalid Amount", orderId: order.id };
     }
     if (order.status === "paid" || order.status === "refunded") {
-      return { httpStatus: 409, responseCode: "4095200", responseMessage: "Duplicate Notification", orderId: order.id };
+      return { httpStatus: 200, responseCode: "2005200", responseMessage: "Successful", orderId: order.id, duplicate: true };
     }
 
     if (status === "00") {

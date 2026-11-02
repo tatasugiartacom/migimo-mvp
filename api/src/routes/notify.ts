@@ -21,7 +21,7 @@ export function notifyRoutes(app: FastifyInstance, deps: { cfg: Config; mti: Mti
       verified = verifyRsa(cfg.mti.mtiPublicKey, notifyStringToSign("POST", path, raw, ts), sig);
     }
 
-    let result: { httpStatus: number; responseCode: string; responseMessage: string; orderId?: number };
+    let result: { httpStatus: number; responseCode: string; responseMessage: string; orderId?: number; duplicate?: boolean };
     if (!verified && cfg.mti.notifyVerify === "strict") {
       result = { httpStatus: 401, responseCode: "4015200", responseMessage: "Unauthorized. Invalid Signature" };
     } else {
@@ -49,7 +49,12 @@ export function notifyRoutes(app: FastifyInstance, deps: { cfg: Config; mti: Mti
       responseHeaders: resHeaders,
       responseBody: JSON.stringify(resBody),
       responseCode: result.responseCode,
-      error: verified ? null : "Tanda tangan notify tidak terverifikasi",
+      error: [
+        verified ? null : "Tanda tangan notify tidak terverifikasi",
+        result.duplicate ? "Pembayaran ganda: pesanan ini sudah dibayar sebelumnya" : null,
+      ]
+        .filter(Boolean)
+        .join("; ") || null,
     });
 
     reply.code(result.httpStatus).headers(resHeaders).send(resBody);

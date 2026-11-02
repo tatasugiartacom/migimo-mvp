@@ -7,14 +7,15 @@ import type { Config } from "../config.js";
 import type { MtiSimulator } from "../mti/simulator.js";
 import type { Payments } from "../payments.js";
 import { UAT_CASES, type UatRunner } from "../uat.js";
+import { KASUS_UAT, isiWorkbook, type UatYokke } from "../uat-yokke.js";
 import { csv } from "./admin.js";
 
 /** Menjalankan dan mengekspor skenario UAT (login Google atau header Authorization: Bearer ADMIN_TOKEN). */
 export function uatRoutes(
   app: FastifyInstance,
-  deps: { cfg: Config; db: Db; payments: Payments; uat: UatRunner; sim: MtiSimulator | null; mti: MtiClient },
+  deps: { cfg: Config; db: Db; payments: Payments; uat: UatRunner; uatYokke: UatYokke; sim: MtiSimulator | null; mti: MtiClient },
 ) {
-  const { cfg, db, payments, uat, sim, mti } = deps;
+  const { cfg, db, payments, uat, uatYokke, sim, mti } = deps;
 
   app.register(async (r) => {
     r.addHook("onRequest", requireAdmin(cfg));
@@ -24,6 +25,43 @@ export function uatRoutes(
           req.log.error(e, "Gagal mencatat audit"),
         );
       }
+    });
+
+    // ---------- UAT dokumen Yokke "Test Case UAT Integrasi QR MPM & ASPI-with Refund" ----------
+    r.get("/admin/uat-yokke", async () => ({ kasus: KASUS_UAT, hasil: await uatYokke.results() }));
+
+    r.post("/admin/uat-yokke/run/:id", async (req) => {
+      const b = (req.body ?? {}) as { orderId?: number; logId?: number };
+      return uatYokke.run(String((req.params as any).id), {
+        orderId: b.orderId ? Number(b.orderId) : undefined,
+        logId: b.logId ? Number(b.logId) : undefined,
+      });
+    });
+
+    /** Jalankan semua skenario yang tidak butuh pembayaran/aksi Yokke, lalu ambil bukti notify yang sudah masuk. */
+    r.post("/admin/uat-yokke/run-auto", async () => {
+      const out = [];
+      for (const c of KASUS_UAT.filter((x) => x.mode === "auto" || x.mode === "notify")) out.push(await uatYokke.run(c.id));
+      return out;
+    });
+
+    /** Unggah file Excel test case Yokke (base64), kembalikan file yang sama dengan hasil UAT terisi. */
+    r.post("/admin/uat-yokke/export", { bodyLimit: 15 * 1024 * 1024 }, async (req, reply) => {
+      const b = (req.body ?? {}) as { file?: string };
+      if (!b.file) return reply.code(400).send({ error: "Pilih file Excel test case dari Yokke" });
+      const hasil = await uatYokke.results();
+      const logs = new Map((await uatYokke.logs(hasil.flatMap((h) => h.logIds))).map((l) => [Number(l.id), l]));
+      let out;
+      try {
+        out = await isiWorkbook(Buffer.from(b.file.replace(/^data:[^,]*,/, ""), "base64"), hasil, logs);
+      } catch {
+        return reply.code(400).send({ error: "File tidak bisa dibaca. Pastikan file .xlsx asli dari Yokke." });
+      }
+      reply
+        .type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        .header("X-Terisi", String(out.terisi))
+        .header("Content-Disposition", 'attachment; filename="Test Case UAT Integrasi QR MPM - Migimo.xlsx"')
+        .send(out.buf);
     });
 
     r.get("/admin/uat/cases", async () => UAT_CASES);
@@ -123,7 +161,7 @@ export function uatRoutes(
       if (!sim) return reply.code(404).send({ error: "Hanya tersedia di mode simulator" });
       const order = await payments.getOrder(Number((req.params as any).orderId));
       if (!order?.reference_no) return reply.code(404).send({ error: "Pesanan/QR tidak ditemukan" });
-      const b = (req.body ?? {}) as { status?: "00" | "06"; times?: number };
+      const b = (req.body ?? {}) as { status?: "00" | "06"; times?: number; issuerName?: string };
       return sim.pay(order.reference_no, b);
     });
   });

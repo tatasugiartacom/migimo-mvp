@@ -34,7 +34,7 @@ export const UAT_CASES: { no: number; group: string; name: string; expected: str
   { no: 26, group: "QR Refund", name: "Invalid memberBank", expected: "Failed" },
   { no: 27, group: "QR Credit", name: "Reguler credit", expected: "Success" },
   { no: 28, group: "QR Credit", name: "Reguler purchase notify", expected: "Success" },
-  { no: 29, group: "QR Credit", name: "Double credit", expected: "Failed" },
+  { no: 29, group: "QR Credit", name: "Double credit", expected: "Success" },
   { no: 30, group: "QR Credit", name: "Purchase notify", expected: "Notify sent, but trx failed" },
   { no: 31, group: "Variable Test", name: "Regular Generate externalId < 15", expected: "Failed" },
   { no: 32, group: "Variable Test", name: "Regular Generate externalId > 15", expected: "Failed" },

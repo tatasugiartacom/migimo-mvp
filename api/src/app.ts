@@ -10,6 +10,7 @@ import { authRoutes } from "./routes/auth.js";
 import { uatRoutes } from "./routes/uat.js";
 import type { MtiSimulator } from "./mti/simulator.js";
 import { UatRunner } from "./uat.js";
+import { UatYokke } from "./uat-yokke.js";
 import { WaAgent } from "./wa/agent.js";
 import { WhatsAppCloud } from "./wa/cloud.js";
 import { whatsappRoutes } from "./routes/whatsapp.js";
@@ -38,7 +39,8 @@ export function buildApp(deps: { cfg: Config; db: Db; fetchImpl?: typeof fetch; 
   notifyRoutes(app, { cfg, mti, payments });
   adminRoutes(app, { cfg, db, payments });
   const uat = new UatRunner(cfg, db, payments, deps.sim ?? null);
-  uatRoutes(app, { cfg, db, payments, uat, sim: deps.sim ?? null, mti });
+  const uatYokke = new UatYokke(cfg, db, payments);
+  uatRoutes(app, { cfg, db, payments, uat, uatYokke, sim: deps.sim ?? null, mti });
   deps.sim?.register(app);
 
   const cloud = new WhatsAppCloud(cfg.wa, deps.waFetch);

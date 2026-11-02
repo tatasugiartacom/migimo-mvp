@@ -77,6 +77,7 @@ export class MtiSimulator {
       symmetricStringToSign({ method: "POST", endpointUrl: path, accessToken: token, body: raw, timestamp: ts }),
     );
     if (headers["x-signature"] !== want) return this.err(401, svc, "00", "Unauthorized. Signature");
+    if (!headers["channel-id"]) return this.err(400, svc, "02", "Invalid Mandatory Field CHANNEL-ID");
     const ext = String(headers["x-external-id"] ?? "");
     if (!/^\d{15}$/.test(ext)) return this.err(400, svc, "01", "Invalid Field Format X-EXTERNAL-ID");
     const key = wibDate() + ext;
@@ -209,6 +210,7 @@ export class MtiSimulator {
     ] as const) {
       if (typeof b[f] !== "string" || b[f].length !== len) return this.err(400, "47", "01", `Invalid Field Format ${f}`);
     }
+    if (b.amount && !/^\d+\.\d{2}$/.test(String(b.amount.value))) return this.err(400, "47", "01", "Invalid Field Format amount.value");
     if (this.partnerRefs.has(b.partnerReferenceNo)) return this.err(409, "47", "01", "Duplicate partnerReferenceNo");
     if (b.merchantId !== this.o.merchantId) return this.err(404, "47", "08", "Invalid Merchant");
     if (b.terminalId !== this.o.terminalId) return this.err(404, "47", "17", "Terminal Invalid");
@@ -235,7 +237,7 @@ export class MtiSimulator {
    * Meniru nasabah membayar QR, lalu MTI mengirim QR Payment Credit Notify ke Migimo.
    * status "00" = berhasil, "06" = gagal. times = 2 untuk skenario "Double credit".
    */
-  async pay(referenceNo: string, opts: { status?: "00" | "06"; times?: number; scenario?: string } = {}) {
+  async pay(referenceNo: string, opts: { status?: "00" | "06"; times?: number; scenario?: string; issuerName?: string } = {}) {
     const t = this.trx.get(referenceNo);
     if (!t) throw new Error("Transaksi simulator tidak ditemukan");
     const status = opts.status ?? "00";
@@ -267,7 +269,7 @@ export class MtiSimulator {
           terminalId: t.terminalId,
           ...(t.approvalCode ? { approvalCode: t.approvalCode } : {}),
           customerName: "Customer Pay",
-          issuerName: "SIMULATOR",
+          issuerName: opts.issuerName ?? "SIMULATOR",
           issuerReferenceID: digits(14),
         },
       });

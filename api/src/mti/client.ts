@@ -21,6 +21,8 @@ export interface CallOpts {
   orderId?: number;
   /** Override X-EXTERNAL-ID (untuk skenario UAT duplikat/panjang salah). */
   externalId?: string;
+  /** Skenario UAT negatif: token salah, tanda tangan salah, atau header wajib CHANNEL-ID tidak dikirim. */
+  tamper?: "token" | "signature" | "no-channel-id";
 }
 
 const SUCCESS: Record<MtiApi, string> = {
@@ -203,7 +205,7 @@ export class MtiClient {
   async call(api: Exclude<MtiApi, "token">, bodyObj: object, opts: CallOpts = {}): Promise<MtiResult> {
     const r = await this.callOnce(api, bodyObj, opts);
     // Token ditolak (mis. kedaluwarsa lebih cepat di sisi MTI): minta token baru lalu ulangi sekali.
-    if (r.httpStatus === 401 && /^401\d{2}01$/.test(r.responseCode ?? "") && !opts.externalId) {
+    if (r.httpStatus === 401 && /^401\d{2}01$/.test(r.responseCode ?? "") && !opts.externalId && !opts.tamper) {
       this.token = null;
       return this.callOnce(api, bodyObj, opts);
     }
@@ -211,24 +213,29 @@ export class MtiClient {
   }
 
   private async callOnce(api: Exclude<MtiApi, "token">, bodyObj: object, opts: CallOpts): Promise<MtiResult> {
-    const token = await this.getToken({ scenario: opts.scenario });
+    const valid = await this.getToken({ scenario: opts.scenario });
+    // Token salah ditandatangani dengan benar, supaya yang ditolak memang tokennya (401xx01), bukan tanda tangan.
+    const token = opts.tamper === "token" ? "INVALID" + valid.slice(7) : valid;
     const path = this.cfg.mti.paths[api];
     const ts = timestampWib();
     const body = minify(bodyObj);
     const externalId = opts.externalId ?? (await nextExternalId(this.db));
-    const headers = {
+    let signature = symmetricSignature(
+      this.cfg.mti.clientSecret,
+      symmetricStringToSign({ method: "POST", endpointUrl: this.signPath(path), accessToken: token, body, timestamp: ts }),
+    );
+    if (opts.tamper === "signature") signature = (signature[0] === "A" ? "B" : "A") + signature.slice(1);
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
       "X-TIMESTAMP": ts,
-      "X-SIGNATURE": symmetricSignature(
-        this.cfg.mti.clientSecret,
-        symmetricStringToSign({ method: "POST", endpointUrl: this.signPath(path), accessToken: token, body, timestamp: ts }),
-      ),
+      "X-SIGNATURE": signature,
       "X-EXTERNAL-ID": externalId,
       "X-PARTNER-ID": this.cfg.mti.partnerId,
       "CHANNEL-ID": this.cfg.mti.channelId,
       ...this.platformHeader(),
     };
+    if (opts.tamper === "no-channel-id") delete headers["CHANNEL-ID"];
     return this.send(api, path, headers, body, opts, externalId);
   }
 

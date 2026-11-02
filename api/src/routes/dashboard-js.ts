@@ -186,8 +186,6 @@ export const DASHBOARD_JS = String.raw`
     toast("Nilai contoh Postman sudah diisi. Klik Buat QRIS.");
   });
 
-  // ---------- UAT ----------
-  var cases = [];
   // ---------- SIT ----------
   function loadSit() {
     var id = $("sitOrder").value.trim();
@@ -214,6 +212,14 @@ export const DASHBOARD_JS = String.raw`
     download("/admin/sit/export.xlsx" + (id ? "?orderId=" + encodeURIComponent(id) : ""), "SIT-QR-MPM-SNAP-Migimo" + (id ? "-pesanan-" + id : "") + ".xlsx");
   });
 
+  // ---------- UAT Yokke (file test case Yokke) ----------
+  var UYK_LEMBAR = { ASPI: "MPM ASPI", ONUS: "ON US", OFFUS: "OFF US" };
+  var UYK_MODE = { auto: "Otomatis", bayar: "Butuh QR dibayar", notify: "Dari notify Yokke", yokke: "Dipicu Yokke" };
+  var UYK_ST = {
+    pass: ["b-ok", "Lulus"], fail: ["b-bad", "Tidak lulus"],
+    perlu_bayar: ["b-wait", "Perlu pembayaran"], perlu_yokke: ["b-wait", "Menunggu Yokke"]
+  };
+  var uykKasus = [];
   function loadUat() {
     loadSit();
     api("/admin/mti/check").then(function (c) {
@@ -221,42 +227,78 @@ export const DASHBOARD_JS = String.raw`
       el.hidden = c.ok;
       el.innerHTML = c.ok ? "" : "<strong>Periksa Railway Variables:</strong><br>" + c.masalah.map(esc).join("<br>");
     }).catch(function () {});
-    return Promise.all([cases.length ? cases : api("/admin/uat/cases"), api("/admin/uat/results")]).then(function (res) {
-      cases = res[0];
-      var byNo = {}; res[1].forEach(function (r) { byNo[r.no] = r; });
-      var count = { pass: 0, fail: 0, other: 0, none: 0 };
-      $("uatBody").innerHTML = cases.map(function (c) {
-        var r = byNo[c.no];
-        if (!r) count.none++; else if (r.status === "pass") count.pass++; else if (r.status === "fail") count.fail++; else count.other++;
-        var extra = r && r.status === "needs_payment" && !simMode
-          ? ' <input class="sm" style="width:90px" placeholder="# pesanan" data-order-for="' + c.no + '" inputmode="numeric">' : "";
-        return "<tr><td class=num>" + c.no + "</td><td>" + esc(c.group) + "</td><td>" + esc(c.name) + "</td><td>" + esc(c.expected) + "</td><td>" +
-          (r ? badge(r.status) + '<div class="muted">' + esc(r.actual) + "</div>" : '<span class="muted">Belum dijalankan</span>') +
-          '</td><td class="mono">' + esc(r && r.responseCode || "-") + '</td><td class="muted">' + esc(r && r.note || "") +
-          '</td><td style="white-space:nowrap"><button class="btn sec sm" data-run="' + c.no + '">Jalankan</button>' + extra + "</td></tr>";
+    return api("/admin/uat-yokke").then(function (d) {
+      uykKasus = d.kasus;
+      var byId = {}; d.hasil.forEach(function (h) { byId[h.id] = h; });
+      var n = { pass: 0, fail: 0, tunggu: 0, belum: 0 };
+      $("uykBody").innerHTML = d.kasus.map(function (c) {
+        var h = byId[c.id];
+        if (!h) n.belum++; else if (h.status === "pass") n.pass++; else if (h.status === "fail") n.fail++; else n.tunggu++;
+        var st = h ? (UYK_ST[h.status] || ["b-mut", h.status]) : null;
+        var isian = c.mode === "bayar"
+          ? ' <input class="sm" style="width:90px" placeholder="# pesanan" data-uyk-order="' + c.id + '" inputmode="numeric">'
+          : c.mode === "notify" || c.mode === "yokke"
+            ? ' <input class="sm" style="width:80px" placeholder="# log" data-uyk-log="' + c.id + '" inputmode="numeric">' : "";
+        return "<tr><td>" + esc(UYK_LEMBAR[c.lembar]) + "</td><td class=num>" + c.no + "</td><td>" + esc(c.judul) +
+          '<div class="muted">' + esc(UYK_MODE[c.mode]) + (c.petunjuk && (!h || h.status !== "pass") ? " · " + esc(c.petunjuk) : "") + "</div></td><td>" + esc(c.harapan) + "</td><td>" +
+          (st ? '<span class="b ' + st[0] + '">' + st[1] + "</span>" : '<span class="muted">Belum</span>') +
+          '</td><td class="mono">' + esc(h && h.responseCode || "-") + '</td><td class="muted">' + esc(h && h.catatan || "") +
+          (h && h.orderId ? " · pesanan #" + esc(h.orderId) : "") +
+          '</td><td style="white-space:nowrap"><button class="btn sec sm" data-uyk-run="' + c.id + '">Jalankan</button>' + isian + "</td></tr>";
       }).join("");
-      $("uatSum").innerHTML = '<span class="b b-ok">Lulus ' + count.pass + '</span><span class="b b-bad">Tidak lulus ' + count.fail +
-        '</span><span class="b b-wait">Perlu tindakan ' + count.other + '</span><span class="b b-mut">Belum dijalankan ' + count.none + "</span>";
+      $("uykSum").innerHTML = '<span class="b b-ok">Lulus ' + n.pass + '</span><span class="b b-bad">Tidak lulus ' + n.fail +
+        '</span><span class="b b-wait">Menunggu pembayaran/Yokke ' + n.tunggu + '</span><span class="b b-mut">Belum dijalankan ' + n.belum + "</span>";
       $("uatNote").textContent = simMode
         ? "Mode simulator: hasil ini latihan terhadap simulator, bukan UAT resmi Yokke."
-        : "Mode live: skenario pembayaran (11, 18–30) butuh transaksi yang sudah dibayar di sandbox Yokke.";
+        : "Urutan: 1) Jalankan skenario otomatis. 2) Minta Yokke membayar QR, lalu jalankan skenario pembayaran & refund. 3) Isi Excel Yokke dan kirim balik.";
     }).catch(function (e) { if (e.message !== "Unauthorized") toast(e.message); });
   }
-  $("uatBody").addEventListener("click", function (e) {
-    var b = e.target.closest("button[data-run]"); if (!b) return;
-    var no = b.getAttribute("data-run");
-    var inp = document.querySelector('[data-order-for="' + no + '"]');
-    var body = inp && inp.value ? { orderId: Number(inp.value) } : {};
+  $("uykBody").addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-uyk-run]"); if (!b) return;
+    var id = b.getAttribute("data-uyk-run");
+    var o = document.querySelector('[data-uyk-order="' + id + '"]');
+    var l = document.querySelector('[data-uyk-log="' + id + '"]');
+    var body = {};
+    if (o && o.value) body.orderId = Number(o.value);
+    if (l && l.value) body.logId = Number(l.value);
     busy(b, true); b.textContent = "Berjalan…";
-    api("/admin/uat/run/" + no, body).then(function (r) { toast("Skenario " + no + ": " + r.status); return loadUat(); })
-      .catch(function (er) { toast(er.message); }).then(function () { b.textContent = "Jalankan"; busy(b, false); });
+    api("/admin/uat-yokke/run/" + id, body).then(function (r) {
+      toast(id + ": " + ((UYK_ST[r.status] || [0, r.status])[1]) + (r.responseCode ? " (" + r.responseCode + ")" : ""));
+      return loadUat();
+    }).catch(function (er) { toast(er.message); }).then(function () { b.textContent = "Jalankan"; busy(b, false); });
   });
-  $("runAll").addEventListener("click", function () {
-    var b = $("runAll");
-    if (!simMode && !confirm("Jalankan ke-38 skenario terhadap sandbox Yokke?")) return;
-    busy(b, true); b.textContent = "Berjalan… (bisa beberapa menit)";
-    api("/admin/uat/run-all", {}).then(function () { toast("Selesai menjalankan 38 skenario"); return loadUat(); })
-      .catch(function (er) { toast(er.message); }).then(function () { b.textContent = "Jalankan semua"; busy(b, false); });
+  $("uykAuto").addEventListener("click", function () {
+    var b = $("uykAuto");
+    if (!simMode && !confirm("Jalankan skenario otomatis terhadap server UAT Yokke?")) return;
+    busy(b, true); b.textContent = "Berjalan… (bisa 1–2 menit)";
+    api("/admin/uat-yokke/run-auto", {}).then(function (r) {
+      var lulus = r.filter(function (x) { return x.status === "pass"; }).length;
+      toast("Selesai: " + lulus + " dari " + r.length + " skenario lulus", 5000);
+      return loadUat();
+    }).catch(function (er) { toast(er.message); }).then(function () { b.textContent = "Jalankan skenario otomatis"; busy(b, false); });
+  });
+  $("uykFile").addEventListener("change", function () {
+    var f = this.files && this.files[0]; var inp = this;
+    if (!f) return;
+    var lbl = $("uykFileLbl"); var teks = lbl.firstChild.nodeValue;
+    lbl.firstChild.nodeValue = "Mengisi Excel…";
+    var rd = new FileReader();
+    rd.onload = function () {
+      var opt = { method: "POST", headers: authHeaders(), credentials: "same-origin" };
+      opt.headers["Content-Type"] = "application/json";
+      opt.body = JSON.stringify({ file: String(rd.result) });
+      fetch("/admin/uat-yokke/export", opt).then(function (r) {
+        if (!r.ok) return r.json().then(function (d) { throw new Error(d.error || ("HTTP " + r.status)); });
+        var terisi = r.headers.get("X-Terisi");
+        return r.blob().then(function (bl) {
+          var a = document.createElement("a"); a.href = URL.createObjectURL(bl);
+          a.download = f.name.replace(/\.xlsx$/i, "") + " - Migimo.xlsx";
+          document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+          toast("Excel terisi: " + terisi + " skenario. Periksa file sebelum dikirim ke Yokke.", 6000);
+        });
+      }).catch(function (er) { toast(er.message, 6000); }).then(function () { lbl.firstChild.nodeValue = teks; inp.value = ""; });
+    };
+    rd.readAsDataURL(f);
   });
   $("mtiPing").addEventListener("click", function () {
     var b = $("mtiPing"); busy(b, true); b.textContent = "Menghubungi MTI…";
@@ -267,7 +309,6 @@ export const DASHBOARD_JS = String.raw`
           "</table><h4>Response body</h4><pre>" + esc(pretty(r.responseBody)) + "</pre>"));
     }).catch(function (er) { toast(er.message); }).then(function () { b.textContent = "Tes koneksi MTI"; busy(b, false); });
   });
-  $("dlUat").addEventListener("click", function () { download("/admin/uat/export.csv", "uat-qris-snap-mpm.csv"); });
   $("dlLogs").addEventListener("click", function () { download("/admin/logs.csv", "mti-logs.csv"); });
 
   // ---------- Log ----------
@@ -299,7 +340,7 @@ export const DASHBOARD_JS = String.raw`
   // ---------- Aktivitas ----------
   var ACT = {
     "/admin/qr": "Buat QRIS", "/admin/orders/:id/inquiry": "Cek status", "/admin/orders/:id/refund": "Refund",
-    "/admin/uat/run/:no": "Jalankan skenario UAT", "/admin/sit/run": "Jalankan alur SIT", "/admin/mti/ping": "Tes koneksi MTI", "/admin/uat/run-all": "Jalankan semua UAT",
+    "/admin/uat/run/:no": "Jalankan skenario UAT", "/admin/uat-yokke/run/:id": "Jalankan skenario UAT Yokke", "/admin/uat-yokke/run-auto": "Jalankan skenario otomatis UAT Yokke", "/admin/uat-yokke/export": "Isi Excel UAT Yokke", "/admin/sit/run": "Jalankan alur SIT", "/admin/mti/ping": "Tes koneksi MTI", "/admin/uat/run-all": "Jalankan semua UAT",
     "/admin/sim/pay/:orderId": "Bayar (simulasi)", "/admin/wa/transfers/:id/dikirim": "Tandai kiriman disalurkan",
     "/admin/wa/contacts/:waId/send": "Balas WhatsApp", "/admin/wa/contacts/:waId/handoff": "Ubah status bot",
     "/admin/wa/uji": "Uji coba bot", "/admin/wa/uji/reset": "Mulai ulang uji bot", login: "Masuk", logout: "Keluar", login_ditolak: "Login ditolak"

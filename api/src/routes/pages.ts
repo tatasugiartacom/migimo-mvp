@@ -103,7 +103,7 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
   <div class="bar"><h1>Migimo · Raksa</h1><span id="modePill" class="pill">…</span><span id="whoami" class="muted"></span><button id="logout" class="btn sec sm">Keluar</button></div>
   <nav role="tablist">
     <button role="tab" data-tab="orders" aria-selected="true">Pesanan</button>
-    <button role="tab" data-tab="uat" aria-selected="false">UAT (38 skenario)</button>
+    <button role="tab" data-tab="uat" aria-selected="false">UAT Yokke (37 skenario)</button>
     <button role="tab" data-tab="logs" aria-selected="false">Log MTI</button>
     <button role="tab" data-tab="wa" aria-selected="false">WhatsApp</button>
     <button role="tab" data-tab="audit" aria-selected="false">Aktivitas</button>
@@ -134,6 +134,20 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
   </section>
   <section data-panel="uat" hidden>
     <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px"><strong>UAT Yokke – Test Case QR MPM &amp; ASPI with Refund</strong></div>
+      <p class="muted" style="margin-top:0">37 skenario dari file test case Yokke (skenario NA tidak ditampilkan). Hasil diisikan langsung ke file Excel Yokke: sheet ASPI kolom Request, Response, Result; sheet ON US/OFF US kolom Log Evidence Result, Date, RRN, Notes.</p>
+      <div class="sum" id="uykSum"></div>
+      <div class="row">
+        <button class="btn" id="uykAuto">Jalankan skenario otomatis</button>
+        <label class="btn sec" style="cursor:pointer" id="uykFileLbl">Isi Excel Yokke (pilih file)<input type="file" id="uykFile" accept=".xlsx" hidden></label>
+        <button class="btn sec" id="mtiPing">Tes koneksi MTI</button>
+        <button class="btn sec" id="dlLogs">Unduh log lengkap (CSV)</button>
+      </div>
+      <p class="muted" id="uatNote"></p>
+      <div id="mtiCheck" class="muted" style="color:var(--merah)" hidden></div>
+    </div>
+    <div class="card tbl"><table><thead><tr><th>Sheet</th><th>No</th><th>Skenario</th><th>Diharapkan</th><th>Hasil</th><th>Response Code</th><th>Catatan</th><th></th></tr></thead><tbody id="uykBody"></tbody></table></div>
+    <div class="card">
       <div class="row" style="justify-content:space-between;margin-bottom:6px"><strong>SIT – dokumen Yokke (4 skenario)</strong></div>
       <p class="muted" style="margin-top:0">Alur: Generate → bayar → Inquiry → Refund, plus Payment Notify dari MTI. Hasil diambil dari log satu pesanan dan diekspor ke Excel dengan kolom yang sama seperti file SIT Yokke.</p>
       <div class="row">
@@ -145,18 +159,6 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
       <p class="muted" id="sitNote"></p>
       <div class="tbl"><table><thead><tr><th>No</th><th>Case</th><th>Response Code</th><th>External ID</th><th>Waktu (WIB)</th><th>Status</th></tr></thead><tbody id="sitBody"></tbody></table></div>
     </div>
-    <div class="card">
-      <div class="sum" id="uatSum"></div>
-      <div class="row">
-        <button class="btn" id="runAll">Jalankan semua</button>
-        <button class="btn sec" id="dlUat">Unduh hasil (CSV)</button>
-        <button class="btn sec" id="dlLogs">Unduh log lengkap (CSV)</button>
-        <button class="btn sec" id="mtiPing">Tes koneksi MTI</button>
-      </div>
-      <p class="muted" id="uatNote"></p>
-      <div id="mtiCheck" class="muted" style="color:var(--merah)" hidden></div>
-    </div>
-    <div class="card tbl"><table><thead><tr><th>No</th><th>Kelompok</th><th>Skenario</th><th>Diharapkan</th><th>Hasil</th><th>Response Code</th><th>Catatan</th><th></th></tr></thead><tbody id="uatBody"></tbody></table></div>
   </section>
   <section data-panel="logs" hidden>
     <div class="card row"><label>Filter skenario<input id="logFilter" placeholder="mis. UAT-01"></label><button class="btn sec" id="refreshLogs">Muat</button></div>
