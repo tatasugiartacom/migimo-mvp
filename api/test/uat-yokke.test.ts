@@ -167,6 +167,8 @@ test("Excel Yokke terisi di kolom yang benar, rumus ringkasan tetap", async () =
   assert.match(String(row6.getCell(6).value), /2004700/);
   assert.equal(row6.getCell(7).value, "Pass");
   assert.equal(a.getRow(11).getCell(7).value, null, "baris NA (No 8) tidak disentuh");
+  const row5 = a.getRow(8); // ASPI No 5 = Conflict, dua langkah
+  assert.match(String(row5.getCell(6).value), /^LANGKAH 1 \(persiapan\)[\s\S]*LANGKAH 2 \(skenario uji\)[\s\S]*409/);
   assert.ok((a.getCell("J30").value as any).formula, "rumus ringkasan dipertahankan");
 
   const on = out.getWorksheet(NAMA_SHEET.ONUS)!;

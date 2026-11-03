@@ -460,12 +460,14 @@ export async function isiWorkbook(template: Buffer, hasil: HasilUat[], logs: Map
     const status = h.status === "pass" ? "Pass" : "Fail";
     const wrap = { wrapText: true, vertical: "top" } as const;
     if (c.lembar === "ASPI") {
-      row.getCell(5).value = potong(bagian.map((b) => b.req).join("\n\n"));
-      row.getCell(6).value = potong(bagian.map((b) => b.res).join("\n\n"));
+      // Skenario dua langkah (mis. Conflict: generate pertama lalu generate kedua) diberi label supaya request & response sejajar.
+      const label = (i: number) => (bagian.length > 1 ? `LANGKAH ${i + 1}${i === bagian.length - 1 ? " (skenario uji)" : " (persiapan)"}\n` : "");
+      row.getCell(5).value = potong(bagian.map((b, i) => label(i) + b.req).join("\n\n"));
+      row.getCell(6).value = potong(bagian.map((b, i) => label(i) + b.res).join("\n\n"));
       row.getCell(7).value = status;
       for (const i of [5, 6, 7]) row.getCell(i).alignment = wrap;
     } else {
-      const log = bagian.map((b, i) => `${bagian.length > 1 ? `LANGKAH ${i + 1}\n` : ""}REQUEST\n${b.req}\n\nRESPONSE\n${b.res}`).join("\n\n");
+      const log = bagian.map((b, i) => `${bagian.length > 1 ? `LANGKAH ${i + 1}${i === bagian.length - 1 ? " (skenario uji)" : " (persiapan)"}\n` : ""}REQUEST\n${b.req}\n\nRESPONSE\n${b.res}`).join("\n\n");
       row.getCell(7).value = potong(log);
       row.getCell(8).value = waktuWib(h.waktu);
       row.getCell(9).value = h.rrn ?? "-";
