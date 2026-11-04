@@ -125,6 +125,9 @@ test("notify gagal, off us, dan skenario yang dipicu Yokke", async () => {
   assert.equal(nf.status, "pass", nf.catatan);
   assert.match(nf.catatan, /status 06/);
   assert.match(nf.catatan, /Penerbit: Bank Mandiri/);
+  const exp = await run("ONUS-14");
+  assert.equal(exp.status, "pass", exp.catatan);
+  assert.match(exp.catatan, /status 06/, "ON US 14 memakai notify gagal (QR expired), bukan notify sukses");
   assert.equal((await db.query("SELECT status FROM orders WHERE id = $1", [gagal.order.id])).rows[0].status, "failed");
 
   // Off us: belum ada pembayaran dari bank lain → menunggu.

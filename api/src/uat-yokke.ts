@@ -246,7 +246,8 @@ export class UatYokke {
        ORDER BY l.id DESC LIMIT 200`,
       [this.cfg.mti.merchantId, this.cfg.mti.mode === "simulator"],
     );
-    const jenis = ["ASPI-18", "ONUS-16"].includes(c.id) ? "gagal" : ["ONUS-13", "OFFUS-02"].includes(c.id) ? "ganda" : "sukses";
+    // ON US 14 (Payment QR Expired) dan 16: notify gagal (status 06) dari QR yang dibayar setelah kedaluwarsa.
+    const jenis = ["ASPI-18", "ONUS-14", "ONUS-16"].includes(c.id) ? "gagal" : ["ONUS-13", "OFFUS-02"].includes(c.id) ? "ganda" : "sukses";
     return (
       rows.find((l) => {
         const p = json(l.request_body);
