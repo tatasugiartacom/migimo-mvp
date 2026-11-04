@@ -216,8 +216,12 @@ export class Payments {
   async applyNotify(
     payload: any,
   ): Promise<{ httpStatus: number; responseCode: string; responseMessage: string; orderId?: number; duplicate?: boolean }> {
+    const info = payload?.additionalInfo ?? {};
     const ref = String(payload?.originalReferenceNo ?? "");
-    const extId = String(payload?.originalExternalId ?? payload?.originalExternalID ?? "");
+    // Notify UAT Yokke: originalExternalID ada di dalam additionalInfo (bukan di tingkat atas).
+    const extId = String(
+      payload?.originalExternalId ?? payload?.originalExternalID ?? info.originalExternalID ?? info.originalExternalId ?? "",
+    );
     const status = String(payload?.latestTransactionStatus ?? "");
     if ((!ref && !extId) || !status || !payload?.amount?.value) {
       return { httpStatus: 400, responseCode: "4005202", responseMessage: "Invalid Mandatory Field" };
@@ -226,8 +230,10 @@ export class Payments {
     const order = (extId && (await this.findByExternalId(extId))) || (ref ? await this.findByReferenceNo(ref) : null);
     if (!order) return { httpStatus: 404, responseCode: "4045201", responseMessage: "Transaction Not Found" };
 
-    const mid = payload?.additionalInfo?.merchantId;
-    if (mid && mid !== order.merchant_id) {
+    // Yokke mengirim merchantId tanpa nol di depan (71005924052), kita menyimpan 15 digit (000071005924052).
+    const mid = info.merchantId;
+    const tanpaNol = (v: unknown) => String(v ?? "").replace(/^0+/, "");
+    if (mid && tanpaNol(mid) !== tanpaNol(order.merchant_id)) {
       return { httpStatus: 404, responseCode: "4045208", responseMessage: "Invalid Merchant", orderId: order.id };
     }
     if (Number(payload.amount.value) !== Number(order.amount)) {

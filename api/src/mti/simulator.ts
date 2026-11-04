@@ -254,23 +254,26 @@ export class MtiSimulator {
     }
     const results: { httpStatus: number; body: any }[] = [];
     for (let i = 0; i < (opts.times ?? 1); i++) {
+      // Format mengikuti notify UAT Yokke yang diterima 4 Nov 2026: originalExternalID di dalam additionalInfo,
+      // merchantId tanpa nol di depan, issuerName kosong, penerbit terbaca dari NNS customerNumber.
+      const nns = /mandiri/i.test(opts.issuerName ?? "mandiri") ? "93600008" : "93600014";
       const body = minify({
         originalReferenceNo: t.paymentRef ?? t.referenceNo,
-        // Penghubung ke QR Generate: X-EXTERNAL-ID saat generate (info Yokke).
-        originalExternalId: t.externalId,
         latestTransactionStatus: status,
         transactionStatusDesc: DESC[status],
-        customerNumber: "1234123412341234",
-        destinationNumber: "1234123412341234",
+        customerNumber: nns + digits(11),
+        destinationNumber: "93600008" + t.merchantId.replace(/^0+/, "").padStart(11, "0").slice(-11),
         amount: { value: t.amount, currency: "IDR" },
         bankCode: "008",
         additionalInfo: {
-          merchantId: t.merchantId,
-          terminalId: t.terminalId,
-          ...(t.approvalCode ? { approvalCode: t.approvalCode } : {}),
           customerName: "Customer Pay",
-          issuerName: opts.issuerName ?? "SIMULATOR",
-          issuerReferenceID: digits(14),
+          ...(t.approvalCode ? { approvalCode: t.approvalCode } : {}),
+          issuerName: opts.issuerName ?? "",
+          issuerReferenceID: digits(12),
+          // Penghubung ke QR Generate: X-EXTERNAL-ID saat generate.
+          originalExternalID: t.externalId,
+          merchantId: t.merchantId.replace(/^0+/, ""),
+          terminalId: t.terminalId,
         },
       });
       const ts = timestampWib();

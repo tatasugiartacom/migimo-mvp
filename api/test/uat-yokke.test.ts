@@ -119,10 +119,13 @@ test("pembayaran on us: notify, refund same day, refund ganda, inquiry", async (
 
 test("notify gagal, off us, dan skenario yang dipicu Yokke", async () => {
   const gagal = await (await api("/admin/qr", { amount: 10000 })).json();
-  await api(`/admin/sim/pay/${gagal.order.id}`, { status: "06", issuerName: "Bank Mandiri" });
+  // Format Yokke asli: issuerName kosong, penerbit dikenali dari NNS customerNumber (93600008 = Mandiri).
+  await api(`/admin/sim/pay/${gagal.order.id}`, { status: "06" });
   const nf = await run("ONUS-16");
   assert.equal(nf.status, "pass", nf.catatan);
   assert.match(nf.catatan, /status 06/);
+  assert.match(nf.catatan, /Penerbit: Bank Mandiri/);
+  assert.equal((await db.query("SELECT status FROM orders WHERE id = $1", [gagal.order.id])).rows[0].status, "failed");
 
   // Off us: belum ada pembayaran dari bank lain → menunggu.
   assert.equal((await run("OFFUS-04")).status, "perlu_bayar");

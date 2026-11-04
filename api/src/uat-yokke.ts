@@ -145,7 +145,12 @@ function rapi(text: string | null) {
 /** Nama penerbit (issuer) dari payload notify, untuk membedakan on us (Mandiri) dan off us. */
 export function penerbit(payload: any): string {
   const a = payload?.additionalInfo ?? {};
-  return String(a.issuerName ?? a.issuer ?? payload?.issuerName ?? "").trim();
+  const nama = String(a.issuerName ?? a.issuer ?? payload?.issuerName ?? "").trim();
+  if (nama) return nama;
+  // Yokke mengirim issuerName kosong; penerbit dikenali dari NNS di awal customerNumber (93600008 = Bank Mandiri).
+  const nns = String(payload?.customerNumber ?? "").slice(0, 8);
+  if (!/^\d{8}$/.test(nns)) return "";
+  return nns === "93600008" ? "Bank Mandiri" : `NNS ${nns}`;
 }
 
 const onUs = (nama: string) => /mandiri|livin/i.test(nama);
