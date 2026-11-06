@@ -53,6 +53,9 @@ export class MtiClient {
   get terminalId() {
     return this.cfg.mti.terminalId;
   }
+  get memberBank() {
+    return this.cfg.mti.memberBank;
+  }
 
   async log(entry: {
     direction: "in" | "out";

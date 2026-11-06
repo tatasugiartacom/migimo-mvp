@@ -199,7 +199,7 @@ export class UatRunner {
         case 8:
         case 17:
         case 26:
-          res = this.special(no, "needs_clarification", "Yokke: nilai memberBank = '008'. Posisi field belum ada di dokumen API maupun Postman; tidak termasuk dokumen SIT.");
+          res = this.special(no, "needs_clarification", "memberBank '008' sudah dikirim sesuai spec v1.1_v3 (additionalInfo). Skenario Invalid memberBank tidak termasuk dokumen SIT.");
           break;
         case 9: {
           if (!this.sim) {

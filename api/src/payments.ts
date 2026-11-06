@@ -39,6 +39,7 @@ export interface Overrides {
   originalTransactionDate?: string;
   originalApprovalCode?: string;
   originalPartnerReferenceNo?: string;
+  memberBank?: string;
   /** Nilai amount.value apa adanya (skenario "Invalid Field Format", mis. "10000" tanpa desimal). */
   amountValue?: string;
 }
@@ -137,6 +138,8 @@ export class Payments {
       amount: { value: o.amountValue ?? money(p.amount), currency: "IDR" },
     };
     if (p.feeAmount !== undefined) body.feeAmount = { value: money(p.feeAmount), currency: "IDR" };
+    // Spec v1.1_v3: additionalInfo wajib, berisi memberBank.
+    body.additionalInfo = { memberBank: o.memberBank ?? this.mti.memberBank };
 
     const result = await this.mti.call("generate", body, {
       scenario: p.scenario,
@@ -168,6 +171,7 @@ export class Payments {
       additionalInfo: {
         originalTransactionDate: o.originalTransactionDate ?? order.paid_transaction_date ?? order.transaction_date,
         terminalId: o.terminalId ?? order.terminal_id,
+        memberBank: o.memberBank ?? this.mti.memberBank,
       },
     };
     const result = await this.mti.call("query", body, { scenario: p.scenario, orderId, externalId: o.externalId });
@@ -196,11 +200,13 @@ export class Payments {
       originalExternalId: o.originalExternalId ?? order.external_id,
       merchantId: o.merchantId ?? order.merchant_id,
       reason: p.reason ?? "Customer cancelation",
-      refundAmount: { value: money(p.amount ?? Number(order.amount)), currency: "IDR" },
+      // Spec v1.1_v3: nominal refund memakai field "amount".
+      amount: { value: money(p.amount ?? Number(order.amount)), currency: "IDR" },
       additionalInfo: {
         originalTransactionDate: o.originalTransactionDate ?? order.paid_transaction_date ?? order.transaction_date,
         terminalId: o.terminalId ?? order.terminal_id,
         originalApprovalCode: o.originalApprovalCode ?? order.approval_code ?? "",
+        memberBank: o.memberBank ?? this.mti.memberBank,
       },
     };
     const result = await this.mti.call("cancel", body, { scenario: p.scenario, orderId, externalId: o.externalId });

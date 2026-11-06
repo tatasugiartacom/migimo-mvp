@@ -109,6 +109,30 @@ test("pembayaran on us: notify, refund same day, refund ganda, inquiry", async (
   assert.equal(ref.responseCode, "2007700");
   assert.equal(ref.orderId, Number(gen.order.id));
 
+  // Spec v1.1_v3: Generate membawa additionalInfo.memberBank; Inquiry & Refund lewat /v3.0 dengan memberBank;
+  // nominal refund memakai field "amount" (bukan refundAmount).
+  const req = async (id: number) => {
+    const { rows } = await db.query("SELECT url, request_body FROM mti_logs WHERE id = $1", [id]);
+    return { url: rows[0].url as string, body: JSON.parse(rows[0].request_body) };
+  };
+  const { rows: gl } = await db.query(
+    "SELECT id FROM mti_logs WHERE api = 'generate' AND order_id = $1 ORDER BY id LIMIT 1",
+    [gen.order.id],
+  );
+  const g = await req(Number(gl[0].id));
+  assert.match(g.url, /\/v2\.0\/qr\/qr-mpm-generate$/);
+  assert.deepEqual(g.body.additionalInfo, { memberBank: "008" });
+  const q = await req(inq.logIds[inq.logIds.length - 1]);
+  assert.match(q.url, /\/v3\.0\/qr\/qr-mpm-query$/);
+  assert.equal(q.body.additionalInfo.memberBank, "008");
+  const c = await req(ref.logIds[ref.logIds.length - 1]);
+  assert.match(c.url, /\/v3\.0\/qr\/qr-mpm-cancel$/);
+  assert.deepEqual(c.body.amount, { value: "10000.00", currency: "IDR" });
+  assert.equal(c.body.refundAmount, undefined);
+  assert.equal(c.body.reason, "Customer cancelation");
+  assert.equal(c.body.additionalInfo.memberBank, "008");
+  assert.ok(c.body.additionalInfo.originalApprovalCode);
+
   const dobel = await run("ONUS-08");
   assert.equal(dobel.status, "pass", dobel.catatan);
   assert.equal(dobel.responseCode, "4047704");

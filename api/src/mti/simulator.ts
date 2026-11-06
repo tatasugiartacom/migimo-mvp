@@ -138,10 +138,10 @@ export class MtiSimulator {
       });
     });
 
-    app.post(`${prefix}/v2.0/qr/qr-mpm-query`, async (req, reply) => {
+    app.post(`${prefix}/v3.0/qr/qr-mpm-query`, async (req, reply) => {
       const raw = (req as any).rawBody as string;
       const b = req.body as any;
-      const e = this.checkService("51", "/v2.0/qr/qr-mpm-query", req.headers, raw) ?? this.findTrx("51", b, "query");
+      const e = this.checkService("51", "/v3.0/qr/qr-mpm-query", req.headers, raw) ?? this.findTrx("51", b, "query");
       if ("http" in e) return reply.code(e.http).send(e.body);
       const t = e.trx;
       reply.send({
@@ -163,10 +163,10 @@ export class MtiSimulator {
       });
     });
 
-    app.post(`${prefix}/v2.0/qr/qr-mpm-cancel`, async (req, reply) => {
+    app.post(`${prefix}/v3.0/qr/qr-mpm-cancel`, async (req, reply) => {
       const raw = (req as any).rawBody as string;
       const b = req.body as any;
-      const e = this.checkService("77", "/v2.0/qr/qr-mpm-cancel", req.headers, raw) ?? this.findTrx("77", b, "cancel");
+      const e = this.checkService("77", "/v3.0/qr/qr-mpm-cancel", req.headers, raw) ?? this.findTrx("77", b, "cancel");
       if ("http" in e) return reply.code(e.http).send(e.body);
       const t = e.trx;
       if (b.originalPartnerReferenceNo !== t.partnerReferenceNo) {
@@ -185,7 +185,7 @@ export class MtiSimulator {
         const x = this.err(404, "77", "18", "Inconsistent Request. Approval code");
         return reply.code(x.http).send(x.body);
       }
-      if (Number(b.refundAmount?.value) !== Number(t.amount)) {
+      if (Number(b.amount?.value) !== Number(t.amount)) {
         const x = this.err(404, "77", "13", "Invalid Amount");
         return reply.code(x.http).send(x.body);
       }
@@ -212,6 +212,8 @@ export class MtiSimulator {
     }
     if (b.amount && !/^\d+\.\d{2}$/.test(String(b.amount.value))) return this.err(400, "47", "01", "Invalid Field Format amount.value");
     if (this.partnerRefs.has(b.partnerReferenceNo)) return this.err(409, "47", "01", "Duplicate partnerReferenceNo");
+    // Spec v1.1_v3: additionalInfo wajib pada QR Generate.
+    if (!b.additionalInfo || typeof b.additionalInfo !== "object") return this.err(400, "47", "02", "Invalid Mandatory Field additionalInfo");
     if (b.merchantId !== this.o.merchantId) return this.err(404, "47", "08", "Invalid Merchant");
     if (b.terminalId !== this.o.terminalId) return this.err(404, "47", "17", "Terminal Invalid");
     if (!b.amount || !(Number(b.amount.value) > 0)) return this.err(404, "47", "13", "Invalid Amount");

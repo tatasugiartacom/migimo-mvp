@@ -64,6 +64,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
       partnerId: env.MTI_PARTNER_ID ?? "",
       merchantId: env.MTI_MERCHANT_ID ?? "",
       terminalId: env.MTI_TERMINAL_ID ?? "",
+      /** additionalInfo.memberBank (kode bank acquirer, spec v1.1_v3). Dikonfirmasi Yokke untuk Migimo: "008". */
+      memberBank: env.MTI_MEMBER_BANK ?? "008",
       channelId: env.MTI_CHANNEL_ID ?? "02",
       /** Header X-PLATFORM (Postman collection sandbox Yokke memakai "PORTAL"). Kosongkan untuk tidak mengirim. */
       platform: env.MTI_PLATFORM ?? "PORTAL",
@@ -82,8 +84,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
       paths: {
         token: env.MTI_PATH_TOKEN ?? "/qr/v2.0/access-token/b2b",
         generate: env.MTI_PATH_GENERATE ?? "/v2.0/qr/qr-mpm-generate",
-        query: env.MTI_PATH_QUERY ?? "/v2.0/qr/qr-mpm-query",
-        cancel: env.MTI_PATH_CANCEL ?? "/v2.0/qr/qr-mpm-cancel",
+        query: env.MTI_PATH_QUERY ?? "/v3.0/qr/qr-mpm-query",
+        cancel: env.MTI_PATH_CANCEL ?? "/v3.0/qr/qr-mpm-cancel",
         notify: env.MTI_PATH_NOTIFY ?? "/qr/qr-mpm-notify",
       },
     },
