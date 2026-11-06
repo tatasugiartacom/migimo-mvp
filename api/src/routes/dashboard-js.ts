@@ -24,6 +24,20 @@ export const DASHBOARD_JS = String.raw`
     clearTimeout(toast._t); toast._t = setTimeout(function () { t.style.display = "none"; }, ms || 3500);
   }
 
+  // Tampilan HP: setiap sel tabel diberi label dari judul kolomnya (dipakai CSS untuk tampilan kartu).
+  function labelTables() {
+    var tables = document.querySelectorAll(".tbl table");
+    for (var i = 0; i < tables.length; i++) {
+      var heads = [].map.call(tables[i].querySelectorAll("thead th"), function (th) { return th.textContent.trim(); });
+      var cells = tables[i].querySelectorAll("tbody td:not([data-label])");
+      for (var j = 0; j < cells.length; j++) {
+        var td = cells[j];
+        td.setAttribute("data-label", td.colSpan > 1 ? "" : heads[td.cellIndex] || "");
+      }
+    }
+  }
+  new MutationObserver(labelTables).observe(document.body, { childList: true, subtree: true });
+
   function api(path, body) {
     var opt = { method: body === undefined ? "GET" : "POST", headers: authHeaders(), credentials: "same-origin" };
     if (body !== undefined) { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }

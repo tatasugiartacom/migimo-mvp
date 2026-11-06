@@ -81,6 +81,25 @@ pre{background:var(--panel);border-radius:10px;padding:10px;overflow:auto;max-he
 .bub.u{align-self:flex-end;background:#DCF8C6}.bub.a{align-self:flex-start;background:var(--panel)}.bub.t{align-self:flex-start;background:#E0E7FF}
 .bub.s{align-self:center;background:none;color:var(--abu);font-size:12px;padding:2px}
 .bub img{display:block;width:220px;max-width:100%;border-radius:8px;margin-bottom:6px;background:#fff}
+@media (max-width:720px){
+  .bar{padding:10px 16px;gap:8px}.bar h1{font-size:16px}#whoami{font-size:12px;flex-basis:100%;order:3}
+  nav{padding:0 8px}nav button{padding:10px 12px}
+  main{padding:12px}
+  .card{padding:12px;border-radius:12px;margin-bottom:12px}
+  input,select{font-size:16px}
+  .row>label{flex:1 1 100%}.row input{width:100%!important}.row>.btn{flex:1 1 auto}
+  .tbl table,.tbl tbody,.tbl tr,.tbl td{display:block;width:100%}
+  .tbl thead{display:none}
+  .tbl tr{border:1px solid var(--garis);border-radius:12px;padding:6px 12px;margin-bottom:10px;background:#fff}
+  .tbl td{position:relative;border:0;padding:6px 0 6px 36%;min-height:30px;word-break:break-word}
+  .tbl td::before{content:attr(data-label);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;position:absolute;left:0;top:7px;width:33%;color:var(--abu);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;line-height:1.3}
+  .tbl td[data-label=""]{padding-left:0}.tbl td[data-label=""]::before{display:none}
+  .tbl td.num{white-space:normal}
+  .tbl td .btn{margin:2px 4px 2px 0}
+  .tbl td input.sm{width:110px!important}
+  .qr{width:min(240px,100%);height:auto;aspect-ratio:1}
+  .bub{max-width:90%}
+}
 </style></head><body>
 <section id="login" class="card" hidden>
   <h2>Dashboard Migimo · Raksa</h2>
